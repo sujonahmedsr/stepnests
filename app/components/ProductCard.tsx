@@ -2,6 +2,7 @@ import { gql, type StorefrontApi } from "@shopify/hydrogen";
 import { Link } from "react-router";
 
 import { compareMoney, formatPrice } from "~/lib/money";
+import { shopifyImageSrcSet, shopifyImageUrl } from "~/lib/shopify-image";
 
 export const PRODUCT_CARD_FRAGMENT = gql(`
   fragment ProductCard on Product {
@@ -60,28 +61,36 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
 
   return (
     <article
-      className="group card flex flex-col gap-2"
+      className="product-card group card flex flex-col gap-3"
       aria-label={product.title}
       data-testid="product-card"
     >
-      <div className="rounded-card bg-surface-secondary relative block aspect-square overflow-hidden">
+      <div className="product-card__media rounded-card bg-surface-secondary relative block overflow-hidden">
         {primaryImage ? (
-          <div className="h-full w-full motion-safe:transition-transform motion-safe:duration-300 motion-safe:group-hover:scale-[1.04]">
+          <Link
+            to={`/products/${product.handle}`}
+            aria-label={`View ${product.title}`}
+            className="product-card__image-link absolute inset-0"
+          >
             <img
-              src={primaryImage.url}
+              src={shopifyImageUrl(primaryImage.url, { width: 640 })}
+              srcSet={shopifyImageSrcSet(primaryImage.url, [320, 480, 640, 960])}
+              sizes="(min-width: 64rem) 25vw, (min-width: 48rem) 33vw, 50vw"
               alt={primaryImage.altText ?? product.title}
-              className="h-full w-full object-cover"
+              className="product-card__image h-full w-full object-contain"
               loading={priority ? "eager" : "lazy"}
               fetchPriority={priority ? "high" : "auto"}
             />
-          </div>
+          </Link>
         ) : null}
         {hoverImage ? (
-          <div className="pointer-events-none absolute inset-0 opacity-0 motion-safe:transition-opacity motion-safe:duration-300 motion-safe:group-hover:opacity-100">
+          <div className="product-card__hover-image pointer-events-none absolute inset-0 opacity-0 motion-safe:transition-opacity motion-safe:duration-300 motion-safe:group-hover:opacity-100">
             <img
-              src={hoverImage.url}
+              src={shopifyImageUrl(hoverImage.url, { width: 640 })}
+              srcSet={shopifyImageSrcSet(hoverImage.url, [320, 480, 640, 960])}
+              sizes="(min-width: 64rem) 25vw, (min-width: 48rem) 33vw, 50vw"
               alt={hoverImage.altText ?? ""}
-              className="h-full w-full object-cover"
+              className="product-card__image h-full w-full object-contain"
               loading="lazy"
             />
           </div>
@@ -94,7 +103,7 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
           </span>
         ) : null}
       </div>
-      <div className="flex flex-col gap-0.5 text-left">
+      <div className="product-card__details flex flex-col gap-1 text-left">
         <h3 className="type-body-sm text-on-surface line-clamp-2 font-medium">
           <Link to={`/products/${product.handle}`} className="card-link text-on-surface">
             {product.title}

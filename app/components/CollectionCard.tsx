@@ -1,6 +1,8 @@
 import { gql, type StorefrontApi } from "@shopify/hydrogen";
 import { Link } from "react-router";
 
+import { shopifyImageSrcSet, shopifyImageUrl } from "~/lib/shopify-image";
+
 export const COLLECTION_CARD_PRODUCT_COUNT_LIMIT = 100;
 
 export const COLLECTION_CARD_FRAGMENT = gql(`
@@ -85,7 +87,9 @@ export function CollectionCard({
         {image ? (
           <div className="h-full w-full motion-safe:transition-transform motion-safe:duration-300 motion-safe:group-hover:scale-[1.04]">
             <img
-              src={image.url}
+              src={shopifyImageUrl(image.url, { width: 1000 })}
+              srcSet={shopifyImageSrcSet(image.url, [480, 720, 1000, 1400])}
+              sizes="(min-width: 64rem) 33vw, (min-width: 40rem) 50vw, 100vw"
               alt=""
               width={imageWidth}
               height={imageHeight}

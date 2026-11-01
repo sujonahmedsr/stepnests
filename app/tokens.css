@@ -159,6 +159,9 @@
   --spacing-hero-copy-max-mobile: 33rem;
   --spacing-home-collection-card: 19rem;
   --spacing-home-collection-card-mobile: 14rem;
+  --spacing-home-trust-block: clamp(1.5rem, 3.5vw, 2.5rem);
+  --spacing-home-trust-gap: clamp(1rem, 3vw, 2.5rem);
+  --spacing-home-trust-item-gap: 0.375rem;
   --spacing-product-card-gap-x: 1rem;
   --spacing-product-card-gap-y: 2.5rem;
   --spacing-product-card-gap-x-mobile: 0.5rem;
