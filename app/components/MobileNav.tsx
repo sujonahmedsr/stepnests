@@ -1,6 +1,11 @@
 import { Link } from "react-router";
 
-import { closeMobileNavDrawer, MOBILE_NAV_DRAWER_ID, openDialogFallback } from "~/lib/cart-drawer";
+import {
+  closeDialogFallback,
+  closeMobileNavDrawer,
+  MOBILE_NAV_DRAWER_ID,
+  openDialogFallback,
+} from "~/lib/cart-drawer";
 
 export function MobileNav() {
   return (
@@ -14,11 +19,10 @@ export function MobileNav() {
       <div className="flex h-full flex-col">
         <div className="min-h-touch-target relative flex shrink-0 items-center px-4 py-1">
           <span
-            className="text-on-surface pointer-events-none absolute left-1/2 -translate-x-1/2 text-sm font-medium"
+            className="mobile-nav__title text-on-surface pointer-events-none absolute left-1/2 -translate-x-1/2"
             id="mobile-nav-title"
-            aria-live="polite"
           >
-            Mobile navigation
+            StepNests
           </span>
           <button
             type="button"
@@ -26,26 +30,54 @@ export function MobileNav() {
             command="close"
             className="button-icon focus-visible:outline-accent ms-auto inline-flex h-11 w-11 cursor-pointer items-center justify-center rounded font-medium focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 motion-safe:transition-[color,background-color,border-color,transform] motion-safe:active:scale-[0.97]"
             aria-label="Close"
-            onClick={() => closeMobileNavDrawer()}
+            onClick={() => closeDialogFallback(MOBILE_NAV_DRAWER_ID)}
           >
             <img src="/icons/icon-x.svg" alt="" className="size-5" aria-hidden="true" />
           </button>
         </div>
         <div className="flex-1 overflow-y-auto p-4">
           <nav aria-label="Mobile navigation">
-            <ul role="list" className="flex flex-col">
+            <ul role="list" className="mobile-nav-links flex flex-col">
               <li>
                 <Link
                   to="/collections"
-                  className="min-h-touch-target text-on-surface flex items-center rounded-sm text-xl font-normal no-underline hover:opacity-70 motion-safe:transition-opacity"
+                  className="mobile-nav__link min-h-touch-target text-on-surface flex items-center no-underline"
                   onClick={() => closeMobileNavDrawer()}
                 >
                   Collections
                 </Link>
               </li>
+              <li>
+                <Link
+                  to="/#new-arrivals"
+                  className="mobile-nav__link min-h-touch-target text-on-surface flex items-center no-underline"
+                  onClick={() => closeMobileNavDrawer()}
+                >
+                  New arrivals
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/search"
+                  className="mobile-nav__link min-h-touch-target text-on-surface flex items-center no-underline"
+                  onClick={() => closeMobileNavDrawer()}
+                >
+                  Search
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/account"
+                  className="mobile-nav__link min-h-touch-target text-on-surface flex items-center no-underline"
+                  onClick={() => closeMobileNavDrawer()}
+                >
+                  Account
+                </Link>
+              </li>
             </ul>
           </nav>
         </div>
+        <p className="mobile-nav__note">A considered collection for the everyday.</p>
       </div>
     </dialog>
   );

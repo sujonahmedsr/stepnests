@@ -16,14 +16,7 @@
   --color-on-surface-secondary: #6b6b6b;
   --color-border: #e6e0d6;
 
-  /* ─── Brand: the single source of truth ────────────────────────────────
-     Change THIS one value to recolor the entire storefront. Every interactive
-     surface below — buttons, the cart-icon count badge, focus rings, selected
-     filter swatches and variant option pills — is DERIVED from it with modern
-     CSS: color-mix() in perceptual oklab space for the hover/active state
-     shades, and relative-color oklch() for the softer accent tint. Nothing
-     hard-codes the burgundy a second time, so the whole UI re-harmonizes from
-     this one knob. */
+  /* Brand neutrals drive controls; the leather accent remains independent. */
   --color-primary: #1c1c1c;
 
   /* Interactive — derived from --color-primary.
@@ -34,9 +27,7 @@
   --color-interactive-active: color-mix(in oklab, var(--color-primary) 72%, black);
   --color-interactive-text: #ffffff;
 
-  /* Accent — a lighter, desaturated tint of the brand, used for focus rings
-     and the accent badge. Relative-color oklch: lift lightness, cut chroma to
-     ~40%, ease the hue a touch. Tracks --color-primary automatically. */
+  /* Leather accent for restrained highlights and focus states. */
   --color-accent: #b8895b;
   --color-focus: #86613f;
 
@@ -50,9 +41,7 @@
   --color-button-secondary-text: var(--color-on-surface);
   --color-button-outline-border: var(--color-interactive);
   --color-button-outline-text: var(--color-interactive);
-  /* Shop Pay brand button — mirrors the fixed branding of Hydrogen's
-     ShopPayButton rendered in the live app, so the reference shows the
-     same purple accelerated-checkout action. */
+  /* Shop Pay uses Shopify's fixed brand color. */
   --color-button-shop-pay: #5433eb;
   --color-button-shop-pay-text: #ffffff;
 
@@ -129,6 +118,7 @@
   /* Layout spacing */
   --spacing-page: 80rem;
   --spacing-margin: 1rem;
+  --spacing-border-width: 1px;
   --spacing-half: 0.25rem;
   --spacing-1: 0.5rem;
   --spacing-2: 1rem;
@@ -142,6 +132,29 @@
   --spacing-section-desktop: clamp(6rem, 8vw, 8rem);
   --spacing-section-mobile: clamp(3.5rem, 10vw, 4.5rem);
   --spacing-site-header: 4.5rem;
+  --spacing-site-header-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  --spacing-header-actions-gap: 0.25rem;
+  --spacing-header-icon: 2.75rem;
+  --spacing-header-logo-max: 10rem;
+  --spacing-header-logo-height: 2.5rem;
+  --spacing-header-nav-gap: clamp(1.25rem, 2.4vw, 2.5rem);
+  --spacing-header-nav-padding: 0.75rem;
+  --spacing-header-nav-copy: 0.75rem;
+  --spacing-header-announcement-block: 0.625rem;
+  --spacing-mobile-nav-inset: 1.25rem;
+  --spacing-mobile-nav-title: 1.5rem;
+  --spacing-mobile-nav-link-padding: 0.75rem;
+  --spacing-mobile-nav-note: 1.5rem;
+  --spacing-footer-column-min: 11rem;
+  --spacing-footer-columns-gap: 3rem;
+  --spacing-footer-link-gap: 0.5rem;
+  --spacing-footer-payment-gap: 0.625rem;
+  --spacing-footer-bottom-block: 1.25rem;
+  --spacing-footer-bottom-gap: 1rem;
+  --spacing-footer-content-max: 20rem;
+  --spacing-footer-note-size: 0.75rem;
+  --spacing-site-shell-inline: 1rem;
+  --spacing-footer-header-gap: 1rem;
   --spacing-hero-copy-max: 42rem;
   --spacing-hero-copy-max-mobile: 33rem;
   --spacing-home-collection-card: 19rem;
@@ -251,6 +264,11 @@
   --type-home-section-title-size: clamp(2rem, 4vw, 3.25rem);
   --type-collection-title-size: clamp(2.25rem, 4vw, 3.25rem);
   --type-category-title-size: 1.5rem;
+  --type-header-nav-size: 0.75rem;
+  --type-announcement-size: 0.75rem;
+  --type-footer-note-size: 0.75rem;
+  --type-mobile-nav-link-size: clamp(1.5rem, 7vw, 2rem);
+  --type-mobile-nav-title-size: 1.5rem;
   --aspect-category-card: 1.13;
   --icon-stroke-width: 1.5;
 }

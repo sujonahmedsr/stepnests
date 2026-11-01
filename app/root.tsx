@@ -137,7 +137,7 @@ export function Layout({ children }: { children: ReactNode }) {
         <Meta />
         <Links />
       </head>
-      <body className="bg-surface text-on-surface font-body flex min-h-svh flex-col antialiased">
+      <body className="bg-background text-on-surface font-body flex min-h-svh flex-col antialiased">
         <a
           href="#main-content"
           className="focus-visible:bg-interactive focus-visible:text-interactive-text sr-only focus-visible:not-sr-only focus-visible:fixed focus-visible:start-4 focus-visible:top-4 focus-visible:z-50 focus-visible:rounded focus-visible:px-4 focus-visible:py-2"
