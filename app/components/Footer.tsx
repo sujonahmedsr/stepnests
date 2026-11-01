@@ -35,6 +35,11 @@ export function Footer({ shopInfo }: { shopInfo: StorefrontShop }) {
                 New arrivals
               </Link>
             </li>
+            <li>
+              <Link to="/about" className={linkClass}>
+                About StepNests
+              </Link>
+            </li>
           </ul>
         </nav>
         <nav aria-labelledby="footer-customer-care-heading">
@@ -51,8 +56,28 @@ export function Footer({ shopInfo }: { shopInfo: StorefrontShop }) {
               </Link>
             </li>
             <li>
+              <Link to="/cart" className={linkClass}>
+                Cart
+              </Link>
+            </li>
+            <li>
               <Link to="/account" className={linkClass}>
                 Account
+              </Link>
+            </li>
+            <li>
+              <Link to="/size-guide" className={linkClass}>
+                Size guide
+              </Link>
+            </li>
+            <li>
+              <Link to="/contact" className={linkClass}>
+                Contact
+              </Link>
+            </li>
+            <li>
+              <Link to="/policies" className={linkClass}>
+                Store policies
               </Link>
             </li>
           </ul>

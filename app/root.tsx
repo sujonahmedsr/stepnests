@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import {
   isRouteErrorResponse,
   Links,
+  Link,
   Meta,
   Outlet,
   Scripts,
@@ -12,7 +13,10 @@ import {
   useRouteLoaderData,
 } from "react-router";
 
-import { CartAnalyticsTracker, PageViewedTracker } from "~/components/AnalyticsTrackers";
+import {
+  CartAnalyticsTracker,
+  PageViewedTracker,
+} from "~/components/AnalyticsTrackers";
 import { AnnouncementBar } from "~/components/AnnouncementBar";
 import { CartDrawer } from "~/components/CartDrawer";
 import { Footer } from "~/components/Footer";
@@ -20,13 +24,20 @@ import { Header } from "~/components/Header";
 import { SearchDrawer } from "~/components/SearchDrawer";
 import { CartProvider } from "~/lib/cart";
 import { cartHandlers } from "~/lib/cart-handlers";
-import { createRequestCustomerAccount, customerAccountContext } from "~/lib/customer-account";
+import {
+  createRequestCustomerAccount,
+  customerAccountContext,
+} from "~/lib/customer-account";
 import { envContext } from "~/lib/env";
 import { predictiveSearchHandlers } from "~/lib/predictive-search-handlers";
 import { loadRootLayout } from "~/lib/root-layout";
 import { routeTemplates } from "~/lib/route-templates";
 import { createEphemeralSessionManager } from "~/lib/session";
-import { analyticsConsent, resolveShopIdentity, storefrontConfig } from "~/lib/shop";
+import {
+  analyticsConsent,
+  resolveShopIdentity,
+  storefrontConfig,
+} from "~/lib/shop";
 import {
   createRequestStorefrontClient,
   storefrontClientContext,
@@ -39,7 +50,11 @@ import appStylesHref from "./app.css?url";
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
-  { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
+  {
+    rel: "preconnect",
+    href: "https://fonts.gstatic.com",
+    crossOrigin: "anonymous",
+  },
   {
     rel: "stylesheet",
     href: "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Inter:wght@400;500;600&display=swap",
@@ -58,9 +73,14 @@ export const middleware: Route.MiddlewareFunction[] = [
       context.waitUntil,
     );
     const requestContext = storefrontClient.requestContext;
-    const customerAccount = await createRequestCustomerAccount(request, env, requestContext);
+    const customerAccount = await createRequestCustomerAccount(
+      request,
+      env,
+      requestContext,
+    );
     const sessionManager =
-      customerAccount?.customerAccount.sessionManager ?? createEphemeralSessionManager(request);
+      customerAccount?.customerAccount.sessionManager ??
+      createEphemeralSessionManager(request);
 
     const shopifyRoute = handleShopifyRoutes({
       request,
@@ -77,11 +97,17 @@ export const middleware: Route.MiddlewareFunction[] = [
 
     context.set(storefrontClientContext, storefrontClient);
     context.set(storefrontRequestContext, requestContext);
-    context.set(customerAccountContext, customerAccount?.customerAccount ?? null);
+    context.set(
+      customerAccountContext,
+      customerAccount?.customerAccount ?? null,
+    );
 
     const response = await next();
-    const sessionHeaders = new Headers((await sessionManager.commit?.()) ?? undefined);
-    for (const [name, value] of sessionHeaders) response.headers.append(name, value);
+    const sessionHeaders = new Headers(
+      (await sessionManager.commit?.()) ?? undefined,
+    );
+    for (const [name, value] of sessionHeaders)
+      response.headers.append(name, value);
     if (response.status === 404) {
       const redirect = await handleShopifyRedirects({
         request,
@@ -110,6 +136,7 @@ export async function loader({ context, request }: Route.LoaderArgs) {
     shopInfo: layout.shopInfo,
     shopIdentity: resolveShopIdentity(env, layout.shopId),
     currency: layout.currency,
+    origin: new URL(request.url).origin,
   };
 }
 
@@ -168,14 +195,16 @@ export default function App({ loaderData }: Route.ComponentProps) {
 }
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
-  let message = "Oops!";
+  let message = "Something went wrong";
   let details = "An unexpected error occurred.";
   let stack: string | undefined;
 
   if (isRouteErrorResponse(error)) {
-    message = error.status === 404 ? "404" : "Error";
+    message = error.status === 404 ? "404" : "We hit a snag";
     details =
-      error.status === 404 ? "The requested page could not be found." : error.statusText || details;
+      error.status === 404
+        ? "The requested page could not be found."
+        : error.statusText || details;
   } else if (import.meta.env.DEV && error && error instanceof Error) {
     details = error.message;
     stack = error.stack;
@@ -185,10 +214,27 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
     <main
       id="main-content"
       tabIndex={-1}
-      className="max-w-page px-margin mx-auto w-full flex-1 py-12"
+      className="utility-page max-w-page px-margin mx-auto w-full flex-1"
     >
-      <h1 className="type-display text-on-surface">{message}</h1>
-      <p className="text-on-surface-secondary mt-4">{details}</p>
+      <div className="utility-page__copy">
+        <p className="eyebrow">StepNests</p>
+        <h1 className="type-display mt-3">{message}</h1>
+        <p className="text-on-surface-secondary mt-4">{details}</p>
+        <div className="mt-8 flex flex-wrap gap-3">
+          <Link
+            to="/"
+            className="button-primary min-h-touch-target inline-flex items-center justify-center px-6 no-underline"
+          >
+            Back to home
+          </Link>
+          <Link
+            to="/collections/all"
+            className="button-secondary min-h-touch-target inline-flex items-center justify-center px-6 no-underline"
+          >
+            Shop all footwear
+          </Link>
+        </div>
+      </div>
       {stack ? (
         <pre className="border-border mt-6 w-full overflow-x-auto rounded border p-4 text-sm">
           <code>{stack}</code>

@@ -2,7 +2,10 @@
 // per request by the root loader. Every value comes from the Storefront API `shop`
 // object; nothing here is invented when the store leaves a field unset.
 
-import type { CardBrand, DigitalWallet } from "@shopify/hydrogen/storefront-api-types";
+import type {
+  CardBrand,
+  DigitalWallet,
+} from "@shopify/hydrogen/storefront-api-types";
 
 import type { RootLayoutQueryResult } from "~/lib/root-layout";
 
@@ -50,7 +53,8 @@ const PAYMENT_METHOD_LABELS = {
 } as const satisfies Record<CardBrand | DigitalWallet, string>;
 
 /** Display label for a supported card brand or digital wallet, such as `"Shop Pay"`. */
-export type PaymentMethodLabel = (typeof PAYMENT_METHOD_LABELS)[keyof typeof PAYMENT_METHOD_LABELS];
+export type PaymentMethodLabel =
+  (typeof PAYMENT_METHOD_LABELS)[keyof typeof PAYMENT_METHOD_LABELS];
 
 function nonEmpty(value: string | null | undefined): string | null {
   const trimmed = value?.trim();
@@ -58,14 +62,17 @@ function nonEmpty(value: string | null | undefined): string | null {
 }
 
 /** Maps accepted card brands and digital wallets to deduplicated display labels. */
-export function getPaymentMethodLabels(paymentSettings: PaymentSettingsData): PaymentMethodLabel[] {
+export function getPaymentMethodLabels(
+  paymentSettings: PaymentSettingsData,
+): PaymentMethodLabel[] {
   const labels = new Set<PaymentMethodLabel>();
   for (const method of [
     ...paymentSettings.acceptedCardBrands,
     ...paymentSettings.supportedDigitalWallets,
   ]) {
     // Only display payment methods explicitly listed in the label record.
-    if (Object.hasOwn(PAYMENT_METHOD_LABELS, method)) labels.add(PAYMENT_METHOD_LABELS[method]);
+    if (Object.hasOwn(PAYMENT_METHOD_LABELS, method))
+      labels.add(PAYMENT_METHOD_LABELS[method]);
   }
   return [...labels];
 }
@@ -85,7 +92,9 @@ function normalizeLogo(
 }
 
 /** Normalizes the root query's `shop` selection for the layout and metadata. */
-export function normalizeStorefrontShop(shop: StorefrontShopQueryData): StorefrontShop {
+export function normalizeStorefrontShop(
+  shop: StorefrontShopQueryData,
+): StorefrontShop {
   return {
     name: nonEmpty(shop.name) ?? FALLBACK_SHOP_NAME,
     logo: normalizeLogo(shop.brand?.logo),
@@ -98,9 +107,19 @@ export function normalizeStorefrontShop(shop: StorefrontShopQueryData): Storefro
  * (`matches[0]` in `Route.MetaArgs`), so routes need no extra API request.
  */
 export function getShopNameFromRootMatch(
-  rootMatch: { loaderData?: { shopInfo?: { name: string } | null } | null } | null | undefined,
+  rootMatch:
+    | { loaderData?: { shopInfo?: { name: string } | null } | null }
+    | null
+    | undefined,
 ): string {
   return nonEmpty(rootMatch?.loaderData?.shopInfo?.name) ?? FALLBACK_SHOP_NAME;
+}
+
+export function getOriginFromRootMatch(
+  rootMatch:
+    { loaderData?: { origin?: string | null } | null } | null | undefined,
+): string | null {
+  return nonEmpty(rootMatch?.loaderData?.origin);
 }
 
 /** Formats a document title as `<page> · <shop name>`. */

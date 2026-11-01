@@ -1052,17 +1052,93 @@ body {
   background: var(--color-overlay-subtle);
 }
 
-.size-guide-dialog table {
+.size-guide-table {
   width: 100%;
   border-collapse: collapse;
   text-align: start;
 }
 
-.size-guide-dialog th,
-.size-guide-dialog td {
+.size-guide-table th,
+.size-guide-table td {
   border-bottom: var(--spacing-border-width) solid var(--color-border);
   padding: var(--spacing-2);
   text-align: start;
+}
+
+.utility-page {
+  padding-block: var(--spacing-section-desktop);
+}
+
+.utility-page__copy {
+  max-width: var(--spacing-editorial-copy-max);
+}
+
+.policy-content {
+  line-height: var(--leading-copy);
+}
+
+.policy-content :is(h2, h3) {
+  margin-block: var(--spacing-4) var(--spacing-2);
+  font-family: var(--font-heading);
+  font-size: var(--type-heading-md-size);
+  font-weight: var(--font-weight-medium);
+}
+
+.policy-content :is(p, ul, ol) {
+  margin-block: var(--spacing-2);
+}
+
+.policy-content :is(ul, ol) {
+  padding-inline-start: var(--spacing-4);
+}
+
+.policy-content ul {
+  list-style: disc;
+}
+
+.policy-content ol {
+  list-style: decimal;
+}
+
+.policy-content a {
+  color: var(--color-accent-on-light);
+  text-decoration: underline;
+  text-underline-offset: var(--spacing-half);
+}
+
+.cart-free-delivery {
+  display: grid;
+  gap: var(--spacing-free-delivery-gap);
+}
+
+.cart-free-delivery p {
+  margin: 0;
+}
+
+.cart-free-delivery__bar {
+  appearance: none;
+  width: 100%;
+  height: var(--spacing-free-delivery-height);
+  overflow: hidden;
+  border: 0;
+  border-radius: var(--radius-badge);
+  background: var(--color-border);
+  color: var(--color-success);
+}
+
+.cart-free-delivery__bar::-webkit-progress-bar {
+  border-radius: var(--radius-badge);
+  background: var(--color-border);
+}
+
+.cart-free-delivery__bar::-webkit-progress-value {
+  border-radius: var(--radius-badge);
+  background: var(--color-success);
+}
+
+.cart-free-delivery__bar::-moz-progress-bar {
+  border-radius: var(--radius-badge);
+  background: var(--color-success);
 }
 
 .price-range-link {
@@ -1219,6 +1295,10 @@ body {
 }
 
 @media (width < theme(--breakpoint-md)) {
+  .utility-page {
+    padding-block: var(--spacing-section-mobile);
+  }
+
   .home-hero {
     min-height: min(
       var(--spacing-home-hero-mobile-max-height),

@@ -225,6 +225,8 @@
   --spacing-nav-mega-gap: clamp(2rem, 6vw, 6rem);
   --spacing-nav-mega-link-padding-block: 0.75rem;
   --spacing-size-dialog-padding: clamp(1.25rem, 3vw, 2rem);
+  --spacing-free-delivery-height: 0.375rem;
+  --spacing-free-delivery-gap: 0.5rem;
   --spacing-product-details-bottom: 3rem;
   --spacing-footer-copy-max: 20rem;
   --spacing-brand-mark-edge: 4vw;

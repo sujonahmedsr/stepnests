@@ -1,20 +1,31 @@
+import type { MoneyV2 } from "@shopify/hydrogen";
 import { ShopPayButton } from "@shopify/hydrogen/react";
 import { useEffect, useMemo, useState, type SubmitEvent } from "react";
 import { Link } from "react-router";
 
+import { FREE_DELIVERY_THRESHOLDS } from "~/lib/cart-config";
 import { useCart, useCartForm } from "~/lib/cart";
 import { closeCartDrawer, configureOpenCartAction, CART_DRAWER_ID } from "~/lib/cart-drawer";
 import { formatPrice } from "~/lib/money";
+import { shopifyImageSrcSet, shopifyImageUrl } from "~/lib/shopify-image";
 
 import { publishCartViewed } from "./AnalyticsTrackers";
 
-function CartErrorBanner() {
+export function CartErrorBanner() {
   const errors = useCart((state) => state.errors);
+  const lines = useCart((state) => state.data.lines.nodes);
   const [dismissedAt, setDismissedAt] = useState(0);
   const messages = useMemo(() => {
-    const lines = [...errors.lines.values()].flatMap((group) => group.userErrors);
-    return [...errors.network, ...errors.cart.userErrors, ...lines].map((error) => error.message);
-  }, [errors]);
+    const visibleLineIds = new Set(lines.map((line) => line.id));
+    const orphanedLineErrors = [...errors.lines.entries()]
+      .filter(([lineId]) => !visibleLineIds.has(lineId))
+      .flatMap(([, group]) => group.userErrors);
+    return [
+      ...errors.network,
+      ...errors.cart.userErrors,
+      ...orphanedLineErrors,
+    ].map((error) => error.message);
+  }, [errors, lines]);
 
   if (messages.length === 0 || errors.lastUpdatedAt <= dismissedAt) return null;
 
@@ -40,12 +51,59 @@ function CartErrorBanner() {
   );
 }
 
-function hasPendingCost(pending: {
+export function hasPendingCost(pending: {
   cost?: boolean;
   discountCodes: Set<string>;
   lines: Set<string>;
 }): boolean {
-  return pending.cost ?? (pending.lines.size > 0 || pending.discountCodes.size > 0);
+  return (
+    pending.cost ?? (pending.lines.size > 0 || pending.discountCodes.size > 0)
+  );
+}
+
+export function FreeDeliveryProgress({
+  subtotal,
+  pending = false,
+}: {
+  subtotal: MoneyV2;
+  pending?: boolean;
+}) {
+  const threshold = FREE_DELIVERY_THRESHOLDS[subtotal.currencyCode];
+  const amount = Number.parseFloat(subtotal.amount);
+  if (threshold === undefined || threshold <= 0 || !Number.isFinite(amount))
+    return null;
+
+  const progress = Math.min(100, Math.max(0, (amount / threshold) * 100));
+  const thresholdPrice = formatPrice({
+    amount: String(threshold),
+    currencyCode: subtotal.currencyCode,
+  });
+  const unlocked = amount >= threshold;
+
+  return (
+    <div
+      className={`cart-free-delivery ${pending ? "opacity-60" : ""}`}
+      aria-live="polite"
+      aria-busy={pending}
+    >
+      <p className="text-on-surface text-sm">
+        {unlocked
+          ? "Free delivery unlocked"
+          : `Free delivery on orders of ${thresholdPrice} or more`}
+      </p>
+      <progress
+        className="cart-free-delivery__bar"
+        value={progress}
+        max={100}
+        aria-label="Progress toward free delivery"
+        aria-valuetext={
+          unlocked
+            ? "Free delivery unlocked"
+            : `${thresholdPrice} order threshold for free delivery`
+        }
+      />
+    </div>
+  );
 }
 
 function useCartStatusMessage(): string {
@@ -125,8 +183,21 @@ export function CartLineItem({
       <div className="bg-surface-secondary size-20 shrink-0 overflow-hidden">
         {merchandise?.image ? (
           <img
-            src={merchandise.image.url}
-            alt={merchandise.image.altText ?? product?.title ?? merchandise.title ?? ""}
+            src={shopifyImageUrl(merchandise.image.url, {
+              width: 160,
+              height: 160,
+              crop: "center",
+            })}
+            srcSet={shopifyImageSrcSet(merchandise.image.url, [80, 160])}
+            alt={
+              merchandise.image.altText ??
+              product?.title ??
+              merchandise.title ??
+              ""
+            }
+            width={80}
+            height={80}
+            sizes="80px"
             className="h-full w-full object-cover"
             loading="lazy"
           />
@@ -218,6 +289,12 @@ function CartLines() {
         <p className="text-on-surface-secondary mt-2 text-sm">
           Looks like you haven&apos;t added anything to your cart yet.
         </p>
+        <Link
+          to="/collections/all"
+          className="button-primary min-h-touch-target mt-6 inline-flex items-center justify-center px-5 no-underline"
+        >
+          Explore footwear
+        </Link>
       </div>
     );
   }
@@ -243,7 +320,14 @@ function CartFooter() {
   return (
     <div className="border-border shrink-0 border-t p-4">
       <div className="flex flex-col gap-3">
-        <div className="flex items-center justify-between" aria-busy={isPending}>
+        <FreeDeliveryProgress
+          subtotal={cart.cost.subtotalAmount}
+          pending={isPending}
+        />
+        <div
+          className="flex items-center justify-between"
+          aria-busy={isPending}
+        >
           <span className="text-on-surface text-sm font-medium">
             Estimated total
             {isPending ? <span aria-hidden="true"> (updating)</span> : null}

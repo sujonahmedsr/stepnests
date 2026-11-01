@@ -1,8 +1,14 @@
 import { ShopPayButton } from "@shopify/hydrogen/react";
 import { useEffect } from "react";
+import { Link } from "react-router";
 
 import { publishCartViewed } from "~/components/AnalyticsTrackers";
-import { CartLineItem } from "~/components/CartDrawer";
+import {
+  CartErrorBanner,
+  CartLineItem,
+  FreeDeliveryProgress,
+  hasPendingCost,
+} from "~/components/CartDrawer";
 import { useCart } from "~/lib/cart";
 import { formatPrice } from "~/lib/money";
 import { formatPageTitle, getShopNameFromRootMatch } from "~/lib/storefront-shop";
@@ -16,6 +22,11 @@ export function meta({ matches }: Route.MetaArgs) {
 export default function CartRoute() {
   const cart = useCart((state) => state.data);
   const loading = useCart((state) => state.loading);
+  const pending = useCart((state) => state.pending);
+  const revalidating = useCart(
+    (state) => "revalidating" in state && state.revalidating === true,
+  );
+  const isPending = hasPendingCost(pending) || revalidating;
   const lines = cart.lines.nodes;
 
   useEffect(() => {
@@ -31,13 +42,22 @@ export default function CartRoute() {
       <h1 id="cart-page-title" tabIndex={-1} className="type-display text-on-surface mb-8">
         Cart
       </h1>
-      {loading ? <p className="text-on-surface-secondary">Loading cart…</p> : null}
+      <CartErrorBanner />
+      {loading ? (
+        <p className="text-on-surface-secondary">Loading cart…</p>
+      ) : null}
       {!loading && lines.length === 0 ? (
         <div>
           <p className="text-on-surface font-medium">Your cart is empty.</p>
           <p className="text-on-surface-secondary mt-2 text-sm">
             Looks like you haven&apos;t added anything to your cart yet.
           </p>
+          <Link
+            to="/collections/all"
+            className="button-primary min-h-touch-target mt-6 inline-flex items-center justify-center px-5 no-underline"
+          >
+            Explore footwear
+          </Link>
         </div>
       ) : null}
       {lines.length > 0 ? (
@@ -49,11 +69,23 @@ export default function CartRoute() {
           </ul>
           <aside className="border-border h-fit rounded border p-4" aria-label="Cart summary">
             <div className="flex items-center justify-between">
-              <span className="text-on-surface text-sm font-medium">Estimated total</span>
-              <span className="text-on-surface text-base font-medium">
+              <span
+                className="text-on-surface text-sm font-medium"
+                aria-busy={isPending}
+              >
+                Estimated total
+                {isPending ? <span aria-hidden="true"> (updating)</span> : null}
+              </span>
+              <span
+                className={`text-on-surface text-base font-medium ${isPending ? "text-on-surface-secondary" : ""}`}
+              >
                 {formatPrice(cart.cost.totalAmount)}
               </span>
             </div>
+            <FreeDeliveryProgress
+              subtotal={cart.cost.subtotalAmount}
+              pending={isPending}
+            />
             <p className="text-on-surface-secondary mt-3 text-xs">
               Taxes and shipping calculated at checkout
             </p>

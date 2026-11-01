@@ -19,6 +19,8 @@ analytics, and a consent banner wired up.
   predictive search drawer)
 - `/cart` — cart with Shop Pay (also the no-JS fallback for the cart drawer)
 - `/account` — Customer Account sign-in, log out, and order history
+- `/about`, `/size-guide`, `/contact` — StepNests brand and customer-care pages
+- `/policies` — Shopify-managed shipping, returns, privacy, and terms policies
 
 ## What it demonstrates
 
@@ -145,6 +147,10 @@ No specific metafield format is required.
   classes in `app/app.css`.
 - Route and component files own page copy. Navigation labels and the price ranges
   are shared in `app/lib/navigation.ts`.
+- Cart free-delivery messaging uses the BDT 5,000 threshold in
+  `app/lib/cart-config.ts`; change it there when the delivery policy changes.
+  Set `PUBLIC_CONTACT_EMAIL` in `.env` to show a customer-care address on
+  `/contact`. Shopify-managed policy pages are loaded from the Storefront API.
 
 ## License
 

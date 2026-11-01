@@ -12,6 +12,7 @@ import { useEffect, useMemo, useState, type MouseEvent } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
 
 import { ProductCard, PRODUCT_CARD_FRAGMENT } from "~/components/ProductCard";
+import { FootwearSizeTable } from "~/components/FootwearSizeTable";
 import {
   closeDialogFallback,
   openCartDrawer,
@@ -559,19 +560,6 @@ function isPlainActivation(event: MouseEvent<HTMLAnchorElement>) {
 
 const SIZE_GUIDE_DIALOG_ID = "product-size-guide";
 
-const FOOTWEAR_SIZE_GUIDE = [
-  ["36", "22.5"],
-  ["37", "23.0"],
-  ["38", "23.5"],
-  ["39", "24.5"],
-  ["40", "25.0"],
-  ["41", "25.5"],
-  ["42", "26.5"],
-  ["43", "27.0"],
-  ["44", "28.0"],
-  ["45", "28.5"],
-] as const;
-
 function SizeGuideDialog() {
   return (
     <>
@@ -623,24 +611,14 @@ function SizeGuideDialog() {
           Measure your foot from heel to longest toe while standing. Lengths are
           approximate; check the product packaging if you are between sizes.
         </p>
-        <div className="overflow-x-auto">
-          <table>
-            <thead>
-              <tr>
-                <th scope="col">EU size</th>
-                <th scope="col">Foot length (cm)</th>
-              </tr>
-            </thead>
-            <tbody>
-              {FOOTWEAR_SIZE_GUIDE.map(([size, length]) => (
-                <tr key={size}>
-                  <th scope="row">{size}</th>
-                  <td>{length}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <FootwearSizeTable />
+        <Link
+          to="/size-guide"
+          className="text-accent-on-light min-h-touch-target mt-4 inline-flex items-center underline underline-offset-4"
+          onClick={() => closeDialogFallback(SIZE_GUIDE_DIALOG_ID)}
+        >
+          View full size guide
+        </Link>
       </dialog>
     </>
   );
@@ -888,7 +866,7 @@ function AddToCart({
 
   return (
     <>
-      <form {...formProps({ afterSubmit: openCartDrawer })}>
+      <form {...formProps({ beforeSubmit: openCartDrawer })}>
         <div className="mt-6 mb-10 flex items-center gap-4">
           <QuantitySelector quantity={quantity} setQuantity={setQuantity} />
         </div>
