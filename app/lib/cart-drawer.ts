@@ -25,7 +25,13 @@ export function openDialog(id: string): void {
 }
 
 export function closeDialog(id: string): void {
-  getDialog(id)?.close();
+  const dialog = getDialog(id);
+  if (dialog?.open) dialog.close();
+}
+
+export function closeDialogFallback(id: string): void {
+  if (supportsDialogCommands()) return;
+  closeDialog(id);
 }
 
 export function openCartDrawer(): void {

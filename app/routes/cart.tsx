@@ -11,12 +11,17 @@ import {
 } from "~/components/CartDrawer";
 import { useCart } from "~/lib/cart";
 import { formatPrice } from "~/lib/money";
-import { formatPageTitle, getShopNameFromRootMatch } from "~/lib/storefront-shop";
+import {
+  formatPageTitle,
+  getShopNameFromRootMatch,
+} from "~/lib/storefront-shop";
 
 import type { Route } from "./+types/cart";
 
 export function meta({ matches }: Route.MetaArgs) {
-  return [{ title: formatPageTitle("Cart", getShopNameFromRootMatch(matches[0])) }];
+  return [
+    { title: formatPageTitle("Cart", getShopNameFromRootMatch(matches[0])) },
+  ];
 }
 
 export default function CartRoute() {
@@ -39,7 +44,11 @@ export default function CartRoute() {
       tabIndex={-1}
       className="max-w-page px-margin mx-auto w-full flex-1 py-12"
     >
-      <h1 id="cart-page-title" tabIndex={-1} className="type-display text-on-surface mb-8">
+      <h1
+        id="cart-page-title"
+        tabIndex={-1}
+        className="type-display text-on-surface mb-8"
+      >
         Cart
       </h1>
       <CartErrorBanner />
@@ -64,10 +73,17 @@ export default function CartRoute() {
         <div className="grid gap-8 lg:grid-cols-[2fr_1fr]">
           <ul role="list" className="divide-border divide-y">
             {lines.map((line) => (
-              <CartLineItem key={line.id} line={line} emptyCartFocusId="cart-page-title" />
+              <CartLineItem
+                key={line.id}
+                line={line}
+                emptyCartFocusId="cart-page-title"
+              />
             ))}
           </ul>
-          <aside className="border-border h-fit rounded border p-4" aria-label="Cart summary">
+          <aside
+            className="cart-summary border-border h-fit rounded border p-4"
+            aria-label="Cart summary"
+          >
             <div className="flex items-center justify-between">
               <span
                 className="text-on-surface text-sm font-medium"

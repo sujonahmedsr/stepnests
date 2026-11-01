@@ -1,5 +1,11 @@
-import { getPredictiveSearchItemUrl, getSearchResultUrl } from "@shopify/hydrogen";
-import type { PredictiveSearchProductItem, PredictiveSearchState } from "@shopify/hydrogen";
+import {
+  getPredictiveSearchItemUrl,
+  getSearchResultUrl,
+} from "@shopify/hydrogen";
+import type {
+  PredictiveSearchProductItem,
+  PredictiveSearchState,
+} from "@shopify/hydrogen";
 import {
   PredictiveSearchProvider,
   usePredictiveSearch,
@@ -9,7 +15,11 @@ import {
 import { useRef } from "react";
 import { Link, useNavigate } from "react-router";
 
-import { SEARCH_DRAWER_ID, closeSearchDrawer } from "~/lib/cart-drawer";
+import {
+  SEARCH_DRAWER_ID,
+  closeDialogFallback,
+  closeSearchDrawer,
+} from "~/lib/cart-drawer";
 import { formatPrice } from "~/lib/money";
 import { describeSuggestions } from "~/lib/predictive-search";
 import { routeTemplates } from "~/lib/route-templates";
@@ -61,7 +71,9 @@ function SearchDialog() {
               onSubmit: (event, term) => {
                 event.preventDefault();
                 closeSearchDrawer();
-                void navigate(getSearchResultUrl({ baseUrl: SEARCH_PAGE_PATH, term }));
+                void navigate(
+                  getSearchResultUrl({ baseUrl: SEARCH_PAGE_PATH, term }),
+                );
               },
             })}
           >
@@ -97,9 +109,14 @@ function SearchDialog() {
             command="close"
             className="button-icon focus-visible:outline-accent inline-flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded font-medium focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 motion-safe:transition-[color,background-color,border-color,transform] motion-safe:active:scale-[0.97]"
             aria-label="Close"
-            onClick={() => closeSearchDrawer()}
+            onClick={() => closeDialogFallback(SEARCH_DRAWER_ID)}
           >
-            <img src="/icons/icon-x.svg" alt="" className="size-5" aria-hidden="true" />
+            <img
+              src="/icons/icon-x.svg"
+              alt=""
+              className="size-5"
+              aria-hidden="true"
+            />
           </button>
         </div>
         <SearchSuggestions />
@@ -113,8 +130,17 @@ function SearchSuggestions() {
   const { status, result, term } = state;
 
   return (
-    <div id={RESULTS_ID} className="flex-1 overflow-y-auto p-4" aria-busy={status === "loading"}>
-      <p role="status" aria-live="polite" aria-atomic="true" className="sr-only">
+    <div
+      id={RESULTS_ID}
+      className="flex-1 overflow-y-auto p-4"
+      aria-busy={status === "loading"}
+    >
+      <p
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+        className="sr-only"
+      >
         {describeSuggestions(state)}
       </p>
       <SuggestionsBody status={status} result={result} />
@@ -140,19 +166,32 @@ function SuggestionsBody({ status, result }: SuggestionsBodyProps) {
     case "error":
       return (
         <p role="alert" className="text-critical text-sm">
-          Suggestions are unavailable right now. Use the full search page instead.
+          Suggestions are unavailable right now. Use the full search page
+          instead.
         </p>
       );
     case "loading":
       if (result.items.products.length === 0) {
         return <p className="text-on-surface-secondary text-sm">Searching…</p>;
       }
-      return <SuggestionList products={result.items.products} term={result.term} stale />;
+      return (
+        <SuggestionList
+          products={result.items.products}
+          term={result.term}
+          stale
+        />
+      );
     case "success":
       if (result.items.products.length === 0) {
-        return <p className="text-on-surface-secondary text-sm">No results for “{result.term}”</p>;
+        return (
+          <p className="text-on-surface-secondary text-sm">
+            No results for “{result.term}”
+          </p>
+        );
       }
-      return <SuggestionList products={result.items.products} term={result.term} />;
+      return (
+        <SuggestionList products={result.items.products} term={result.term} />
+      );
   }
 }
 
@@ -162,7 +201,11 @@ type SuggestionListProps = {
   stale?: boolean;
 };
 
-function SuggestionList({ products, term, stale = false }: SuggestionListProps) {
+function SuggestionList({
+  products,
+  term,
+  stale = false,
+}: SuggestionListProps) {
   return (
     <ul role="list" className={stale ? "grid gap-1 opacity-60" : "grid gap-1"}>
       {products.map((product) => (
@@ -174,7 +217,13 @@ function SuggestionList({ products, term, stale = false }: SuggestionListProps) 
   );
 }
 
-function SuggestionLink({ product, term }: { product: PredictiveSearchProductItem; term: string }) {
+function SuggestionLink({
+  product,
+  term,
+}: {
+  product: PredictiveSearchProductItem;
+  term: string;
+}) {
   const variant = product.selectedOrFirstAvailableVariant;
   const image = variant?.image ?? null;
 
@@ -200,14 +249,19 @@ function SuggestionLink({ product, term }: { product: PredictiveSearchProductIte
           loading="lazy"
         />
       ) : (
-        <span className="bg-surface-secondary size-12 shrink-0 rounded" aria-hidden="true" />
+        <span
+          className="bg-surface-secondary size-12 shrink-0 rounded"
+          aria-hidden="true"
+        />
       )}
       <span className="flex min-w-0 flex-col">
         <span className="type-body-sm text-on-surface line-clamp-2 font-medium">
           {product.title}
         </span>
         {variant !== null ? (
-          <span className="text-on-surface-secondary text-sm">{formatPrice(variant.price)}</span>
+          <span className="text-on-surface-secondary text-sm">
+            {formatPrice(variant.price)}
+          </span>
         ) : null}
       </span>
     </Link>

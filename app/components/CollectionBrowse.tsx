@@ -13,6 +13,7 @@ import { useCollection, useCollectionForm } from "@shopify/hydrogen/react";
 import { useEffect, useId, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { Link, useFetcher, useLocation, useNavigation } from "react-router";
 
+import { closeDialogFallback } from "~/lib/cart-drawer";
 import { DEFAULT_MONEY_LOCALE, formatPrice } from "~/lib/money";
 
 export type SortOption = {
@@ -87,12 +88,6 @@ function openDialogFallback(id: string): void {
   if (supportsDialogCommands() || typeof document === "undefined") return;
   const dialog = document.getElementById(id);
   if (dialog instanceof HTMLDialogElement && !dialog.open) dialog.showModal();
-}
-
-function closeDialog(id: string): void {
-  if (typeof document === "undefined") return;
-  const dialog = document.getElementById(id);
-  if (dialog instanceof HTMLDialogElement) dialog.close();
 }
 
 function requestFormSubmit(event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) {
@@ -690,7 +685,7 @@ export function FilterDrawer({
             command="close"
             className="button-icon focus-visible:outline-accent inline-flex h-11 w-11 cursor-pointer items-center justify-center rounded font-medium focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 motion-safe:transition-[color,background-color,border-color,transform] motion-safe:active:scale-[0.97]"
             aria-label="Close"
-            onClick={() => closeDialog(id)}
+            onClick={() => closeDialogFallback(id)}
           >
             <img src="/icons/icon-x.svg" alt="" className="size-5" aria-hidden="true" />
           </button>

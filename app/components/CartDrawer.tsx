@@ -5,7 +5,11 @@ import { Link } from "react-router";
 
 import { FREE_DELIVERY_THRESHOLDS } from "~/lib/cart-config";
 import { useCart, useCartForm } from "~/lib/cart";
-import { closeCartDrawer, configureOpenCartAction, CART_DRAWER_ID } from "~/lib/cart-drawer";
+import {
+  closeDialogFallback,
+  configureOpenCartAction,
+  CART_DRAWER_ID,
+} from "~/lib/cart-drawer";
 import { formatPrice } from "~/lib/money";
 import { shopifyImageSrcSet, shopifyImageUrl } from "~/lib/shopify-image";
 
@@ -30,7 +34,10 @@ export function CartErrorBanner() {
   if (messages.length === 0 || errors.lastUpdatedAt <= dismissedAt) return null;
 
   return (
-    <div className="border-border bg-surface-secondary mx-4 mb-2 rounded p-3 text-sm" role="alert">
+    <div
+      className="border-border bg-surface-secondary mx-4 mb-2 rounded p-3 text-sm"
+      role="alert"
+    >
       <div className="flex items-start justify-between gap-3">
         <div className="grid gap-1">
           {messages.map((message) => (
@@ -108,7 +115,9 @@ export function FreeDeliveryProgress({
 
 function useCartStatusMessage(): string {
   const pending = useCart((state) => state.pending);
-  const revalidating = useCart((state) => "revalidating" in state && state.revalidating === true);
+  const revalidating = useCart(
+    (state) => "revalidating" in state && state.revalidating === true,
+  );
   const networkErrors = useCart((state) => state.errors.network);
   const isPending = hasPendingCost(pending) || revalidating;
   const [sawPending, setSawPending] = useState(false);
@@ -168,9 +177,11 @@ export function CartLineItem({
 
     const item = form.closest("li");
     const neighbour = item?.nextElementSibling ?? item?.previousElementSibling;
-    const selector = intent === "set" ? 'input[name="quantity"]' : `button[value="${intent}"]`;
+    const selector =
+      intent === "set" ? 'input[name="quantity"]' : `button[value="${intent}"]`;
     const target =
-      neighbour?.querySelector<HTMLElement>(selector) ?? document.getElementById(emptyCartFocusId);
+      neighbour?.querySelector<HTMLElement>(selector) ??
+      document.getElementById(emptyCartFocusId);
     target?.focus();
   };
 
@@ -206,22 +217,32 @@ export function CartLineItem({
       <div className="min-w-0 flex-1">
         <p className="type-body-sm text-on-surface font-medium">
           {product?.handle ? (
-            <Link to={`/products/${product.handle}`} className="text-on-surface no-underline">
+            <Link
+              to={`/products/${product.handle}`}
+              className="text-on-surface no-underline"
+            >
               {product.title ?? merchandise?.title ?? "Product"}
             </Link>
           ) : (
             (product?.title ?? merchandise?.title ?? "Product")
           )}
         </p>
-        {optionText ? <p className="text-on-surface-secondary mt-1 text-xs">{optionText}</p> : null}
+        {optionText ? (
+          <p className="text-on-surface-secondary mt-1 text-xs">{optionText}</p>
+        ) : null}
         {line.attributes
           ?.filter((attr) => !attr.key.startsWith("_") && attr.value != null)
           .map((attr) => (
-            <p key={attr.key} className="text-on-surface-secondary mt-1 text-xs italic">
+            <p
+              key={attr.key}
+              className="text-on-surface-secondary mt-1 text-xs italic"
+            >
               {attr.key}: {attr.value}
             </p>
           ))}
-        <p className={`text-on-surface mt-2 text-sm ${pending ? "opacity-50" : ""}`}>
+        <p
+          className={`text-on-surface mt-2 text-sm ${pending ? "opacity-50" : ""}`}
+        >
           {formatPrice(line.cost.totalAmount)}
         </p>
         <form
@@ -237,13 +258,23 @@ export function CartLineItem({
               className="text-on-surface-secondary hover:text-on-surface inline-flex size-11 items-center justify-center disabled:cursor-not-allowed disabled:opacity-50 motion-safe:transition-[color,transform] motion-safe:active:scale-[0.90]"
               aria-label={`Decrease quantity for ${product?.title ?? merchandise?.title ?? "item"}`}
             >
-              <img src="/icons/icon-minus.svg" alt="" className="size-4" aria-hidden="true" />
+              <img
+                src="/icons/icon-minus.svg"
+                alt=""
+                className="size-4"
+                aria-hidden="true"
+              />
             </button>
             <input
-              {...register("quantity", { value: line.quantity, interactive: true })}
+              {...register("quantity", {
+                value: line.quantity,
+                interactive: true,
+              })}
               className={`number-reset text-on-surface h-11 w-12 rounded-none border-0 bg-transparent p-0 text-center text-sm ${pending ? "opacity-50" : ""}`}
               aria-label="Quantity"
-              aria-describedby={lineError?.userErrors.length ? errorId : undefined}
+              aria-describedby={
+                lineError?.userErrors.length ? errorId : undefined
+              }
               aria-invalid={lineError?.userErrors.length ? true : undefined}
             />
             <button
@@ -252,7 +283,12 @@ export function CartLineItem({
               className="text-on-surface-secondary hover:text-on-surface inline-flex size-11 items-center justify-center disabled:cursor-not-allowed disabled:opacity-50 motion-safe:transition-[color,transform] motion-safe:active:scale-[0.90]"
               aria-label={`Increase quantity for ${product?.title ?? merchandise?.title ?? "item"}`}
             >
-              <img src="/icons/icon-plus.svg" alt="" className="size-4" aria-hidden="true" />
+              <img
+                src="/icons/icon-plus.svg"
+                alt=""
+                className="size-4"
+                aria-hidden="true"
+              />
             </button>
           </div>
           <button
@@ -261,7 +297,12 @@ export function CartLineItem({
             className="text-on-surface-secondary hover:text-on-surface inline-flex size-11 items-center justify-center rounded motion-safe:transition-[color,transform] motion-safe:active:scale-[0.90]"
             aria-label={`Remove ${product?.title ?? merchandise?.title ?? "item"}`}
           >
-            <img src="/icons/icon-trash.svg" alt="" className="size-5" aria-hidden="true" />
+            <img
+              src="/icons/icon-trash.svg"
+              alt=""
+              className="size-5"
+              aria-hidden="true"
+            />
           </button>
         </form>
         {lineError?.userErrors.length ? (
@@ -279,7 +320,9 @@ function CartLines() {
   const lines = useCart((state) => state.data.lines.nodes);
 
   if (loading) {
-    return <p className="text-on-surface-secondary type-body-sm">Loading cart…</p>;
+    return (
+      <p className="text-on-surface-secondary type-body-sm">Loading cart…</p>
+    );
   }
 
   if (lines.length === 0) {
@@ -302,7 +345,11 @@ function CartLines() {
   return (
     <ul role="list" className="divide-border -mt-4 divide-y">
       {lines.map((line) => (
-        <CartLineItem key={line.id} line={line} emptyCartFocusId="cart-drawer-title" />
+        <CartLineItem
+          key={line.id}
+          line={line}
+          emptyCartFocusId="cart-drawer-title"
+        />
       ))}
     </ul>
   );
@@ -311,7 +358,9 @@ function CartLines() {
 function CartFooter() {
   const cart = useCart((state) => state.data);
   const pending = useCart((state) => state.pending);
-  const revalidating = useCart((state) => "revalidating" in state && state.revalidating === true);
+  const revalidating = useCart(
+    (state) => "revalidating" in state && state.revalidating === true,
+  );
   const hasLines = cart.lines.nodes.length > 0;
   const isPending = hasPendingCost(pending) || revalidating;
 
@@ -409,9 +458,14 @@ export function CartDrawer() {
               command="close"
               className="button-icon focus-visible:outline-accent inline-flex h-11 w-11 cursor-pointer items-center justify-center rounded font-medium focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 motion-safe:transition-[color,background-color,border-color,transform] motion-safe:active:scale-[0.97]"
               aria-label="Close"
-              onClick={() => closeCartDrawer()}
+              onClick={() => closeDialogFallback(CART_DRAWER_ID)}
             >
-              <img src="/icons/icon-x.svg" alt="" className="size-5" aria-hidden="true" />
+              <img
+                src="/icons/icon-x.svg"
+                alt=""
+                className="size-5"
+                aria-hidden="true"
+              />
             </button>
           </div>
           <CartErrorBanner />
