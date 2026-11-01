@@ -45,7 +45,6 @@ export type CollectionCardData = StorefrontApi.ResultOf<
 
 export type CollectionCardProps = {
   collection: CollectionCardData;
-  priority?: boolean;
   productCount?: number;
   useProductImageFallback?: boolean;
 };
@@ -65,7 +64,6 @@ function productCountText(collection: CollectionCardData, productCount?: number)
 
 export function CollectionCard({
   collection,
-  priority = false,
   productCount,
   useProductImageFallback = true,
 }: CollectionCardProps) {
@@ -94,8 +92,8 @@ export function CollectionCard({
               width={imageWidth}
               height={imageHeight}
               className="h-full w-full object-cover"
-              loading={priority ? "eager" : "lazy"}
-              fetchPriority={priority ? "high" : "auto"}
+              loading="lazy"
+              fetchPriority="auto"
             />
           </div>
         ) : null}

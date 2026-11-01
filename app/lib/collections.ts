@@ -1,7 +1,7 @@
-import { gql, type StorefrontApi } from "@shopify/hydrogen";
-import type { StorefrontClient } from "@shopify/hydrogen";
+import { Cache, gql, type StorefrontApi } from "@shopify/hydrogen";
 
 import { COLLECTION_CARD_FRAGMENT } from "~/components/CollectionCard";
+import type { RequestStorefrontClient } from "~/lib/storefront";
 
 export const COLLECTIONS_PAGE_SIZE = 12;
 
@@ -28,7 +28,7 @@ export async function loadCollectionsPage({
   storefrontClient,
   request,
 }: {
-  storefrontClient: StorefrontClient;
+  storefrontClient: RequestStorefrontClient;
   request: Request;
 }) {
   const url = new URL(request.url);
@@ -37,7 +37,10 @@ export async function loadCollectionsPage({
     after: url.searchParams.get("after") || null,
   };
 
-  const { data } = await storefrontClient.graphql(COLLECTIONS_QUERY, { variables });
+  const { data } = await storefrontClient.graphql(COLLECTIONS_QUERY, {
+    variables,
+    cache: Cache.long(),
+  });
 
   return {
     collections: data?.collections ?? {

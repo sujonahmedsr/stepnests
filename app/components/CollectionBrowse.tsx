@@ -11,7 +11,7 @@ import {
 } from "@shopify/hydrogen";
 import { useCollection, useCollectionForm } from "@shopify/hydrogen/react";
 import { useEffect, useId, useRef, useState, type CSSProperties, type ReactNode } from "react";
-import { Link, useFetcher, useLocation } from "react-router";
+import { Link, useFetcher, useLocation, useNavigation } from "react-router";
 
 import { DEFAULT_MONEY_LOCALE, formatPrice } from "~/lib/money";
 
@@ -339,6 +339,7 @@ function PriceRangeFacet({
   const idPrefix = useId();
   const minId = `${idPrefix}-price-gte`;
   const maxId = `${idPrefix}-price-lte`;
+  const navigation = useNavigation();
   const activePrice = priceFilter(state);
   const min = activePrice?.min ?? "";
   const max = activePrice?.max ?? "";
@@ -348,6 +349,8 @@ function PriceRangeFacet({
   ).currencyNarrowSymbol;
 
   useEffect(() => {
+    if (timer.current) return;
+
     for (const [input, value] of [
       [minInput.current, min],
       [maxInput.current, max],
@@ -355,31 +358,50 @@ function PriceRangeFacet({
       if (!input) continue;
       const matches =
         value === "" ? input.value === "" : input.value !== "" && Number(input.value) === value;
-      if (!matches) {
-        if (timer.current) clearTimeout(timer.current);
-        timer.current = null;
-        input.value = String(value);
-      }
+      if (!matches) input.value = String(value);
     }
   }, [min, max]);
 
   useEffect(() => {
-    function restoreHistoryPrice() {
-      // Cancel the draft before the history loader settles, even when the price is unchanged.
+    function cancelPendingSubmit() {
       if (timer.current) clearTimeout(timer.current);
       timer.current = null;
-      const { filters } = parseCollectionParams(new URLSearchParams(window.location.search));
+    }
+
+    function setInputsFromSearch(search: string) {
+      const { filters } = parseCollectionParams(new URLSearchParams(search));
       const price = filters.find((filter) => filter.price != null)?.price;
       if (minInput.current) minInput.current.value = String(price?.min ?? "");
       if (maxInput.current) maxInput.current.value = String(price?.max ?? "");
     }
 
+    function restoreHistoryPrice() {
+      cancelPendingSubmit();
+      setInputsFromSearch(window.location.search);
+    }
+
+    const form = minInput.current?.form;
+    form?.addEventListener("submit", cancelPendingSubmit);
     window.addEventListener("popstate", restoreHistoryPrice);
     return () => {
+      form?.removeEventListener("submit", cancelPendingSubmit);
       window.removeEventListener("popstate", restoreHistoryPrice);
-      if (timer.current) clearTimeout(timer.current);
+      cancelPendingSubmit();
     };
   }, []);
+
+  useEffect(() => {
+    if (navigation.state !== "loading" || !navigation.location) return;
+
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = null;
+    const { filters } = parseCollectionParams(
+      new URLSearchParams(navigation.location.search),
+    );
+    const price = filters.find((filter) => filter.price != null)?.price;
+    if (minInput.current) minInput.current.value = String(price?.min ?? "");
+    if (maxInput.current) maxInput.current.value = String(price?.max ?? "");
+  }, [navigation.location?.pathname, navigation.location?.search, navigation.state]);
 
   function submitAfterTyping(event: React.ChangeEvent<HTMLInputElement>) {
     if (timer.current) clearTimeout(timer.current);
@@ -521,12 +543,14 @@ export function Toolbar({
   countText,
   defaultSortValue,
   sortOptions,
+  actionPath,
   extraHiddenInputs,
   filterDrawerId = FILTER_DRAWER_ID,
 }: {
   countText: string;
   defaultSortValue: string;
   sortOptions: SortOption[];
+  actionPath: string;
   extraHiddenInputs?: ReactNode;
   filterDrawerId?: string;
 }) {
@@ -559,7 +583,12 @@ export function Toolbar({
           {countText}
         </span>
       </div>
-      <form {...formProps()} method="get" className="flex min-w-0 items-center gap-2">
+      <form
+        {...formProps()}
+        method="get"
+        action={actionPath}
+        className="flex min-w-0 items-center gap-2"
+      >
         {hiddenInputsFromParams(hiddenParams)}
         {extraHiddenInputs}
         <label
@@ -597,10 +626,12 @@ export function Toolbar({
 export function FacetForm({
   availableFilters,
   currencyCode,
+  actionPath,
   extraHiddenInputs,
 }: {
   availableFilters: readonly BrowseFilter[];
   currencyCode: string;
+  actionPath: string;
   extraHiddenInputs?: ReactNode;
 }) {
   const state: CollectionState = useCollection();
@@ -608,7 +639,7 @@ export function FacetForm({
   const sort = currentSortValue(state);
 
   return (
-    <form {...formProps()} method="get">
+    <form {...formProps()} method="get" action={actionPath}>
       {sort ? <input type="hidden" name="sort_by" value={sort} /> : null}
       {extraHiddenInputs}
       <div key={state.handle} className="divide-border divide-y">
@@ -631,11 +662,13 @@ export function FacetForm({
 export function FilterDrawer({
   availableFilters,
   currencyCode,
+  actionPath,
   extraHiddenInputs,
   id = FILTER_DRAWER_ID,
 }: {
   availableFilters: readonly BrowseFilter[];
   currencyCode: string;
+  actionPath: string;
   extraHiddenInputs?: ReactNode;
   id?: string;
 }) {
@@ -666,6 +699,7 @@ export function FilterDrawer({
           <FacetForm
             availableFilters={availableFilters}
             currencyCode={currencyCode}
+            actionPath={actionPath}
             extraHiddenInputs={extraHiddenInputs}
           />
         </div>

@@ -3,9 +3,9 @@ import {
   createPredictiveSearchFormRegister,
   getSortByValue,
 } from "@shopify/hydrogen";
-import { CollectionProvider } from "@shopify/hydrogen/react";
+import { CollectionProvider, useCollection } from "@shopify/hydrogen/react";
 import { useEffect } from "react";
-import { Link, useLocation, useNavigate, useNavigation, useSearchParams } from "react-router";
+import { Link, useNavigate, useSearchParams } from "react-router";
 
 import {
   ActiveFilterChips,
@@ -166,11 +166,11 @@ function ProductGrid({ products }: { products: readonly ProductNode[] }) {
         id="product-grid"
         data-testid="product-grid"
         role="list"
-        className="grid grid-cols-2 gap-x-1 gap-y-10 lg:grid-cols-3"
+        className="grid grid-cols-2 gap-x-1 gap-y-10 md:grid-cols-3 xl:grid-cols-4"
       >
-        {products.map((product, index) => (
-          <li key={`${product.handle}-${index}`}>
-            <ProductCard product={product} priority={index < 3} />
+        {products.map((product) => (
+          <li key={product.handle}>
+            <ProductCard product={product} />
           </li>
         ))}
       </ul>
@@ -190,23 +190,17 @@ function NoResults({ term }: { term: string }) {
 }
 
 function SearchResults({ loaderData }: { loaderData: PerformedSearchData }) {
-  const location = useLocation();
-  const navigation = useNavigation();
-  const isUpdating =
-    navigation.state === "loading" &&
-    navigation.location?.pathname === location.pathname &&
-    navigation.location.search !== location.search;
+  const browseState = useCollection();
+  const isUpdating = browseState.status === "loading";
   const { nodes, pageInfo, isLoading, loadMore } = useLoadMore(
     loaderData.products,
     loaderData.pageInfo,
     loaderData.dataSearch,
   );
   const defaultSortValue = getSortByValue("RELEVANCE", false);
-  const countText = `${nodes.length} results found for “${loaderData.searchTerm}”`;
+  const countText = `${loaderData.totalCount} results found for “${loaderData.searchTerm}”`;
   const searchPath = `/search?q=${encodeURIComponent(loaderData.searchTerm)}`;
   const hiddenQuery = searchTermHiddenInput(loaderData.searchTerm);
-
-  if (nodes.length === 0) return <NoResults term={loaderData.searchTerm} />;
 
   return (
     <>
@@ -217,6 +211,7 @@ function SearchResults({ loaderData }: { loaderData: PerformedSearchData }) {
             <FacetForm
               availableFilters={loaderData.availableFilters}
               currencyCode={loaderData.currencyCode}
+              actionPath="/search"
               extraHiddenInputs={searchTermHiddenInput(loaderData.searchTerm)}
             />
           </div>
@@ -226,6 +221,7 @@ function SearchResults({ loaderData }: { loaderData: PerformedSearchData }) {
             countText={countText}
             sortOptions={SEARCH_SORT_OPTIONS}
             defaultSortValue={defaultSortValue}
+            actionPath="/search"
             extraHiddenInputs={hiddenQuery}
           />
           <ActiveFilterChips
@@ -238,7 +234,11 @@ function SearchResults({ loaderData }: { loaderData: PerformedSearchData }) {
             aria-busy={isUpdating}
             className={`motion-safe:transition-opacity motion-safe:duration-150 ${isUpdating ? "opacity-60" : "opacity-100"}`}
           >
-            <ProductGrid products={nodes} />
+            {nodes.length > 0 ? (
+              <ProductGrid products={nodes} />
+            ) : (
+              <NoResults term={loaderData.searchTerm} />
+            )}
           </div>
           <LoadMore
             pageInfo={pageInfo}
@@ -252,6 +252,7 @@ function SearchResults({ loaderData }: { loaderData: PerformedSearchData }) {
       <FilterDrawer
         availableFilters={loaderData.availableFilters}
         currencyCode={loaderData.currencyCode}
+        actionPath="/search"
         extraHiddenInputs={searchTermHiddenInput(loaderData.searchTerm)}
       />
     </>
@@ -271,6 +272,7 @@ export default function SearchRoute({ loaderData }: Route.ComponentProps) {
         if (loaderData.searchTerm && !nextParams.has("q"))
           nextParams.set("q", loaderData.searchTerm);
         nextParams.delete("after");
+        nextParams.delete("before");
         const nextSearch = nextParams.toString();
         void navigate(
           { search: nextSearch ? `?${nextSearch}` : "" },

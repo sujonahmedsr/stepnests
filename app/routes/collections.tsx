@@ -88,9 +88,9 @@ function CollectionsGrid({ collections }: { collections: readonly CollectionNode
       <h2 className="sr-only">Browse collections</h2>
       <div>
         <ul role="list" className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {collections.map((collection, index) => (
+          {collections.map((collection) => (
             <li key={collection.handle}>
-              <CollectionCard collection={collection} priority={index === 0} />
+              <CollectionCard collection={collection} />
             </li>
           ))}
         </ul>

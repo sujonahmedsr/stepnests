@@ -1,24 +1,28 @@
-import { gql, parseCollectionParams, type StorefrontApi } from "@shopify/hydrogen";
-import type { StorefrontClient } from "@shopify/hydrogen";
+import { Cache, gql, parseCollectionParams, type StorefrontApi } from "@shopify/hydrogen";
 import type { ProductFilter as StorefrontApiProductFilter } from "@shopify/hydrogen/storefront-api-types";
 
 import { PRODUCT_CARD_FRAGMENT } from "~/components/ProductCard";
+import type { RequestStorefrontClient } from "~/lib/storefront";
 
 export const COLLECTION_PAGE_SIZE = 9;
 
 export const COLLECTION_QUERY = gql(
   `
     query CollectionPage(
+      $country: CountryCode
+      $language: LanguageCode
       $handle: String!
       $first: Int!
       $after: String
       $sortKey: ProductCollectionSortKeys
       $reverse: Boolean
       $filters: [ProductFilter!]
-    ) {
-      shop {
-        paymentSettings {
-          currencyCode
+    ) @inContext(country: $country, language: $language) {
+      localization {
+        country {
+          currency {
+            isoCode
+          }
         }
       }
       collection(handle: $handle) {
@@ -81,7 +85,7 @@ export async function loadCollectionPage({
   handle,
   request,
 }: {
-  storefrontClient: StorefrontClient;
+  storefrontClient: RequestStorefrontClient;
   handle: string;
   request: Request;
 }) {
@@ -99,7 +103,10 @@ export async function loadCollectionPage({
     reverse: browse.reverse || undefined,
   };
 
-  const { data } = await storefrontClient.graphql(COLLECTION_QUERY, { variables });
+  const { data } = await storefrontClient.graphql(COLLECTION_QUERY, {
+    variables,
+    cache: Cache.short(),
+  });
 
   if (!data?.collection) throw new Response("Collection not found", { status: 404 });
 
@@ -108,7 +115,7 @@ export async function loadCollectionPage({
     products: data.collection.products.nodes,
     availableFilters: data.collection.products.filters,
     pageInfo: data.collection.products.pageInfo,
-    currencyCode: data.shop.paymentSettings.currencyCode,
+    currencyCode: data.localization.country.currency.isoCode,
     dataSearch: url.searchParams.toString(),
     origin: url.origin,
   };

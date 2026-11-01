@@ -8,6 +8,13 @@ export const PRODUCT_CARD_FRAGMENT = gql(`
   fragment ProductCard on Product {
     handle
     title
+    tags
+    options {
+      name
+      optionValues {
+        name
+      }
+    }
     featuredImage {
       url
       altText
@@ -47,17 +54,27 @@ export type ProductCardData = StorefrontApi.ResultOf<
 
 type ProductCardProps = {
   product: ProductCardData;
-  priority?: boolean;
 };
 
-export function ProductCard({ product, priority = false }: ProductCardProps) {
+export function ProductCard({ product }: ProductCardProps) {
   const primaryImage = product.featuredImage ?? product.images.nodes[0] ?? null;
   const hoverImage = product.images.nodes[1] ?? null;
   const price = product.priceRange.minVariantPrice;
   const compareAt = product.compareAtPriceRange.minVariantPrice;
   const onSale = compareMoney(compareAt, price) > 0;
-  const badge = !product.availableForSale ? "Sold out" : onSale ? "Sale" : null;
-  const badgeClass = !product.availableForSale ? "badge-soldout" : "badge-sale";
+  const isNew = product.tags.some((tag) => {
+    const normalized = tag.trim().toLowerCase().replace(/[-_]+/g, " ");
+    return normalized === "new" || normalized === "new arrival" || normalized === "new arrivals";
+  });
+  const colorCount =
+    product.options.find(({ name }) => /^(color|colour)$/i.test(name.trim()))?.optionValues.length ??
+    0;
+  const badge = !product.availableForSale ? "Sold out" : onSale ? "Sale" : isNew ? "New" : null;
+  const badgeClass = !product.availableForSale
+    ? "badge-soldout"
+    : onSale
+      ? "badge-sale"
+      : "badge-accent";
 
   return (
     <article
@@ -78,8 +95,8 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
               sizes="(min-width: 64rem) 25vw, (min-width: 48rem) 33vw, 50vw"
               alt={primaryImage.altText ?? product.title}
               className="product-card__image h-full w-full object-contain"
-              loading={priority ? "eager" : "lazy"}
-              fetchPriority={priority ? "high" : "auto"}
+              loading="lazy"
+              fetchPriority="auto"
             />
           </Link>
         ) : null}
@@ -128,6 +145,9 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
             </span>
           )}
         </div>
+        {colorCount > 1 ? (
+          <p className="text-on-surface-secondary text-xs">{colorCount} colors</p>
+        ) : null}
       </div>
     </article>
   );

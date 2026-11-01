@@ -1,24 +1,28 @@
-import { gql, parseCollectionParams, type StorefrontApi } from "@shopify/hydrogen";
-import type { StorefrontClient } from "@shopify/hydrogen";
+import { Cache, gql, parseCollectionParams, type StorefrontApi } from "@shopify/hydrogen";
 import type { ProductFilter as StorefrontApiProductFilter } from "@shopify/hydrogen/storefront-api-types";
 
 import { PRODUCT_CARD_FRAGMENT } from "~/components/ProductCard";
+import type { RequestStorefrontClient } from "~/lib/storefront";
 
 export const SEARCH_PAGE_SIZE = 9;
 
 export const SEARCH_QUERY = gql(
   `
     query SearchPage(
+      $country: CountryCode
+      $language: LanguageCode
       $term: String!
       $first: Int!
       $after: String
       $sortKey: SearchSortKeys
       $reverse: Boolean
       $productFilters: [ProductFilter!]
-    ) {
-      shop {
-        paymentSettings {
-          currencyCode
+    ) @inContext(country: $country, language: $language) {
+      localization {
+        country {
+          currency {
+            isoCode
+          }
         }
       }
       search(
@@ -74,7 +78,7 @@ type SearchNode = SearchQueryResult["search"]["nodes"][number];
 type SearchProductNode = Extract<SearchNode, { __typename: "Product" }>;
 type SearchFilters = SearchQueryResult["search"]["productFilters"];
 type SearchPageInfo = SearchQueryResult["search"]["pageInfo"];
-type SearchCurrencyCode = SearchQueryResult["shop"]["paymentSettings"]["currencyCode"];
+type SearchCurrencyCode = SearchQueryResult["localization"]["country"]["currency"]["isoCode"];
 
 type SearchPageEmptyData = {
   performed: false;
@@ -106,7 +110,7 @@ export async function loadSearchPage({
   storefrontClient,
   request,
 }: {
-  storefrontClient: StorefrontClient;
+  storefrontClient: RequestStorefrontClient;
   request: Request;
 }): Promise<SearchPageData> {
   const url = new URL(request.url);
@@ -140,7 +144,10 @@ export async function loadSearchPage({
     reverse: sortKey === "PRICE" ? browse.reverse || undefined : undefined,
   };
 
-  const { data } = await storefrontClient.graphql(SEARCH_QUERY, { variables });
+  const { data } = await storefrontClient.graphql(SEARCH_QUERY, {
+    variables,
+    cache: Cache.short(),
+  });
 
   if (!data?.search) throw new Response("Search unavailable", { status: 502 });
 
@@ -154,7 +161,7 @@ export async function loadSearchPage({
     products,
     availableFilters: data.search.productFilters,
     pageInfo: data.search.pageInfo,
-    currencyCode: data.shop.paymentSettings.currencyCode,
+    currencyCode: data.localization.country.currency.isoCode,
     totalCount: data.search.totalCount,
     dataSearch: url.searchParams.toString(),
     origin: url.origin,

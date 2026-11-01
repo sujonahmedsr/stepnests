@@ -22,7 +22,7 @@ import type { ShopAnalytics, ShopifyScriptsShop } from "@shopify/hydrogen";
 
 export const storefrontConfig = {
   storeDomain: "hydrogen-preview.myshopify.com", // ← default; or set PUBLIC_STORE_DOMAIN
-  i18n: { country: "US", language: "EN" },
+  i18n: { country: "BD", language: "EN" },
 } as const;
 
 // Real store iff a private Storefront API token is available and the store isn't
@@ -98,7 +98,7 @@ export function resolveShopIdentity(
 // Use Shopify's default consent banner and Customer Privacy behavior.
 export const analyticsConsent = {
   mode: "default-banner",
-  country: "US",
+  country: "BD",
   language: "EN",
 } as const;
 

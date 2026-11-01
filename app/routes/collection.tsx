@@ -1,7 +1,7 @@
 import { AnalyticsEvent, getSortByValue } from "@shopify/hydrogen";
-import { CollectionProvider } from "@shopify/hydrogen/react";
+import { CollectionProvider, useCollection } from "@shopify/hydrogen/react";
 import { useEffect } from "react";
-import { Link, useLocation, useNavigate, useNavigation, useSearchParams } from "react-router";
+import { Link, useNavigate, useSearchParams } from "react-router";
 
 import {
   ActiveFilterChips,
@@ -141,11 +141,11 @@ function ProductGrid({ products }: { products: readonly ProductNode[] }) {
         id="product-grid"
         data-testid="product-grid"
         role="list"
-        className="grid grid-cols-2 gap-x-1 gap-y-10 lg:grid-cols-3"
+        className="grid grid-cols-2 gap-x-1 gap-y-10 md:grid-cols-3 xl:grid-cols-4"
       >
-        {products.map((product, index) => (
-          <li key={`${product.handle}-${index}`}>
-            <ProductCard product={product} priority={index < 3} />
+        {products.map((product) => (
+          <li key={product.handle}>
+            <ProductCard product={product} />
           </li>
         ))}
       </ul>
@@ -172,12 +172,8 @@ function EmptyState({ collectionPath }: { collectionPath: string }) {
 }
 
 function CollectionResults({ loaderData }: { loaderData: Route.ComponentProps["loaderData"] }) {
-  const location = useLocation();
-  const navigation = useNavigation();
-  const isUpdating =
-    navigation.state === "loading" &&
-    navigation.location?.pathname === location.pathname &&
-    navigation.location.search !== location.search;
+  const browseState = useCollection();
+  const isUpdating = browseState.status === "loading";
   const collectionPath = `/collections/${loaderData.collection.handle}`;
   const { nodes, pageInfo, isLoading, loadMore } = useLoadMore(
     loaderData.products,
@@ -193,6 +189,7 @@ function CollectionResults({ loaderData }: { loaderData: Route.ComponentProps["l
         countText={countText}
         sortOptions={COLLECTION_SORT_OPTIONS}
         defaultSortValue={defaultSortValue}
+        actionPath={collectionPath}
       />
       <ActiveFilterChips
         basePath={collectionPath}
@@ -220,6 +217,7 @@ function CollectionResults({ loaderData }: { loaderData: Route.ComponentProps["l
       <FilterDrawer
         availableFilters={loaderData.availableFilters}
         currencyCode={loaderData.currencyCode}
+        actionPath={collectionPath}
       />
     </>
   );
@@ -235,6 +233,7 @@ export default function CollectionRoute({ loaderData }: Route.ComponentProps) {
       onChange={(search) => {
         const nextParams = new URLSearchParams(search.startsWith("?") ? search.slice(1) : search);
         nextParams.delete("after");
+        nextParams.delete("before");
         const nextSearch = nextParams.toString();
         void navigate(
           { search: nextSearch ? `?${nextSearch}` : "" },
@@ -258,6 +257,7 @@ export default function CollectionRoute({ loaderData }: Route.ComponentProps) {
                 <FacetForm
                   availableFilters={loaderData.availableFilters}
                   currencyCode={loaderData.currencyCode}
+                  actionPath={`/collections/${loaderData.collection.handle}`}
                 />
               </div>
             </aside>
