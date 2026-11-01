@@ -6,6 +6,7 @@ import {
   MOBILE_NAV_DRAWER_ID,
   openDialogFallback,
 } from "~/lib/cart-drawer";
+import { NEW_ARRIVALS_LINK, SHOP_MENU_GROUPS } from "~/lib/navigation";
 
 export function MobileNav() {
   return (
@@ -32,7 +33,12 @@ export function MobileNav() {
             aria-label="Close"
             onClick={() => closeDialogFallback(MOBILE_NAV_DRAWER_ID)}
           >
-            <img src="/icons/icon-x.svg" alt="" className="size-5" aria-hidden="true" />
+            <img
+              src="/icons/icon-x.svg"
+              alt=""
+              className="icon-size"
+              aria-hidden="true"
+            />
           </button>
         </div>
         <div className="flex-1 overflow-y-auto p-4">
@@ -40,22 +46,51 @@ export function MobileNav() {
             <ul role="list" className="mobile-nav-links flex flex-col">
               <li>
                 <Link
-                  to="/collections"
+                  to={NEW_ARRIVALS_LINK.to}
                   className="mobile-nav__link min-h-touch-target text-on-surface flex items-center no-underline"
                   onClick={() => closeMobileNavDrawer()}
                 >
-                  Collections
+                  {NEW_ARRIVALS_LINK.label}
                 </Link>
               </li>
-              <li>
-                <Link
-                  to="/#new-arrivals"
-                  className="mobile-nav__link min-h-touch-target text-on-surface flex items-center no-underline"
-                  onClick={() => closeMobileNavDrawer()}
-                >
-                  New arrivals
-                </Link>
-              </li>
+              {SHOP_MENU_GROUPS.map((group) => (
+                <li key={group.id}>
+                  <details className="mobile-nav__group">
+                    <summary className="mobile-nav__link min-h-touch-target text-on-surface flex cursor-pointer list-none items-center justify-between">
+                      {group.label}
+                      <img
+                        src="/icons/icon-chevron-down.svg"
+                        alt=""
+                        aria-hidden="true"
+                        className="icon-size-small motion-safe:transition-transform"
+                      />
+                    </summary>
+                    <ul
+                      role="list"
+                      className="mobile-nav__sub-links flex flex-col"
+                    >
+                      <li>
+                        <Link
+                          to={group.allTo}
+                          onClick={() => closeMobileNavDrawer()}
+                        >
+                          {group.allLabel}
+                        </Link>
+                      </li>
+                      {group.links.map((item) => (
+                        <li key={item.to}>
+                          <Link
+                            to={item.to}
+                            onClick={() => closeMobileNavDrawer()}
+                          >
+                            {item.label}
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  </details>
+                </li>
+              ))}
               <li>
                 <Link
                   to="/search"
@@ -77,7 +112,9 @@ export function MobileNav() {
             </ul>
           </nav>
         </div>
-        <p className="mobile-nav__note">A considered collection for the everyday.</p>
+        <p className="mobile-nav__note">
+          A considered collection for the everyday.
+        </p>
       </div>
     </dialog>
   );
@@ -96,7 +133,12 @@ export function MobileNavTrigger() {
       data-testid="nav-trigger"
       onClick={() => openDialogFallback(MOBILE_NAV_DRAWER_ID)}
     >
-      <img src="/icons/icon-menu.svg" alt="" className="size-5" aria-hidden="true" />
+      <img
+        src="/icons/icon-menu.svg"
+        alt=""
+        className="icon-size"
+        aria-hidden="true"
+      />
     </button>
   );
 }

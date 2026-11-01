@@ -10,10 +10,11 @@ analytics, and a consent banner wired up.
 
 ## Pages
 
-- `/` — home (editorial hero, new arrivals, shop by category)
+- `/` — Step Nests footwear storefront (editorial hero, collections, and latest shoes)
 - `/products/:handle` — product detail (gallery, variants, add to cart, Shop Pay)
 - `/collections` — all collections
 - `/collections/:handle` — collection with filters, sort, and pagination
+- `/collections/all` — all products with BDT price-range links
 - `/search` — product search with the same filtering (also the no-JS fallback for the
   predictive search drawer)
 - `/cart` — cart with Shop Pay (also the no-JS fallback for the cart drawer)
@@ -26,6 +27,7 @@ analytics, and a consent banner wired up.
 - A real cart: storefront client + request handlers + `/api/cart` + an accessible
   cart drawer wired to Shopify Standard Actions.
 - A shared layout (header with mobile nav, footer, optional announcement bar).
+- A premium footwear-led storefront design with responsive product and collection browsing.
 - Predictive search: Hydrogen's `/api/predictive-search` handler + an accessible
   search drawer that suggests products as you type and falls back to the
   `/search` page without JavaScript.
@@ -107,7 +109,11 @@ const ANNOUNCEMENTS: Announcement[] = [
   {
     content: (
       <p>
-        Discover our <Link to="/collections" className="underline">latest collections</Link>.
+        Discover our{" "}
+        <Link to="/collections" className="underline">
+          latest collections
+        </Link>
+        .
       </p>
     ),
   },
@@ -119,13 +125,13 @@ No specific metafield format is required.
 
 ## Scripts
 
-| Script | Does |
-| --- | --- |
-| `npm run dev` | Start the Vite dev server with Mini Oxygen. |
-| `npm run dev:https` | Start the Vite dev server with trusted local HTTPS. |
-| `npm run build` | Production React Router build for Oxygen. |
-| `npm run preview` | Build and preview locally with Vite and Mini Oxygen. |
-| `npm run deploy` | Deploy to Oxygen with the Shopify CLI. |
+| Script              | Does                                                         |
+| ------------------- | ------------------------------------------------------------ |
+| `npm run dev`       | Start the Vite dev server with Mini Oxygen.                  |
+| `npm run dev:https` | Start the Vite dev server with trusted local HTTPS.          |
+| `npm run build`     | Production React Router build for Oxygen.                    |
+| `npm run preview`   | Build and preview locally with Vite and Mini Oxygen.         |
+| `npm run deploy`    | Deploy to Oxygen with the Shopify CLI.                       |
 | `npm run typecheck` | React Router typegen + TypeScript + Hydrogen GraphQL checks. |
 
 ## Where to start
@@ -133,8 +139,12 @@ No specific metafield format is required.
 - Swap the store in `app/lib/shop.ts` + `.env`.
 - Routes live in `app/routes/`; shared UI in `app/components/`; data/query helpers
   in `app/lib/`.
-- The design is yours to change — `app/tokens.css` holds the design tokens; the
-  components use them via semantic classes.
+- `app/tokens.css` is the design-token source of truth. Change its `--color-*`,
+  `--font-heading`, `--font-body`, and spacing variables to update the palette,
+  typography, and rhythm; shared components consume those tokens through semantic
+  classes in `app/app.css`.
+- Route and component files own page copy. Navigation labels and the price ranges
+  are shared in `app/lib/navigation.ts`.
 
 ## License
 

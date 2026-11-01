@@ -23,8 +23,16 @@
      -hover and -active are the brand darkened one and two steps in oklab; this
      is the ONLY place the pressed/hover brand shades are defined. */
   --color-interactive: var(--color-primary);
-  --color-interactive-hover: color-mix(in oklab, var(--color-primary) 85%, black);
-  --color-interactive-active: color-mix(in oklab, var(--color-primary) 72%, black);
+  --color-interactive-hover: color-mix(
+    in oklab,
+    var(--color-primary) 85%,
+    black
+  );
+  --color-interactive-active: color-mix(
+    in oklab,
+    var(--color-primary) 72%,
+    black
+  );
   --color-interactive-text: #ffffff;
 
   /* Leather accent for restrained highlights and focus states. */
@@ -61,8 +69,16 @@
   --color-overlay-subtle: rgb(0 0 0 / 0.5);
   --color-overlay-soft: rgb(0 0 0 / 0.2);
   --color-overlay-faint: rgb(0 0 0 / 0.045);
-  --color-text-on-dark: color-mix(in srgb, var(--color-surface) 76%, transparent);
-  --color-text-on-dark-muted: color-mix(in srgb, var(--color-surface) 68%, transparent);
+  --color-text-on-dark: color-mix(
+    in srgb,
+    var(--color-surface) 76%,
+    transparent
+  );
+  --color-text-on-dark-muted: color-mix(
+    in srgb,
+    var(--color-surface) 68%,
+    transparent
+  );
   --color-accent-on-dark: #d7c3a9;
   --color-accent-on-light: #86613f;
   --color-accent-text: #1c1c1c;
@@ -135,6 +151,8 @@
   --spacing-site-header-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   --spacing-header-actions-gap: 0.25rem;
   --spacing-header-icon: 2.75rem;
+  --spacing-icon-size: 1.5rem;
+  --spacing-icon-small-size: 1rem;
   --spacing-header-logo-max: 10rem;
   --spacing-header-logo-height: 2.5rem;
   --spacing-header-nav-gap: clamp(1.25rem, 2.4vw, 2.5rem);
@@ -163,9 +181,10 @@
   --spacing-home-trust-gap: clamp(1rem, 3vw, 2.5rem);
   --spacing-home-trust-item-gap: 0.375rem;
   --spacing-product-card-gap-x: 1rem;
-  --spacing-product-card-gap-y: 2.5rem;
+  --spacing-product-card-gap-y: 2rem;
   --spacing-product-card-gap-x-mobile: 0.5rem;
   --spacing-product-card-gap-y-mobile: 1.75rem;
+  --spacing-product-card-details-gap: 0.5rem;
   --spacing-product-image-inset: 9%;
   --spacing-home-hero-max-height: 47rem;
   --spacing-home-hero-mobile-max-height: 43rem;
@@ -177,8 +196,10 @@
   --spacing-product-page-top-mobile: 0.75rem;
   --spacing-product-breadcrumb-gap: 0.5rem;
   --spacing-product-gallery-gap: 0.5rem;
+  --spacing-product-gallery-thumbnails-gap: 0.75rem;
   --spacing-product-info-top: 0.5rem;
   --spacing-product-info-bottom: 2rem;
+  --spacing-product-sticky-buy-padding: 0.75rem;
   --spacing-collection-page-top: 2rem;
   --spacing-collection-page-bottom: 5rem;
   --spacing-collection-page-top-mobile: 1.25rem;
@@ -199,7 +220,11 @@
   --spacing-focus-ring: 0.125rem;
   --spacing-focus-offset: 0.25rem;
   --spacing-section-title-bottom: 1.5rem;
-  --spacing-product-card-image-padding: 9%;
+  --spacing-product-card-image-padding: clamp(0.75rem, 3.5vw, 1.5rem);
+  --spacing-nav-mega-padding-block: 2rem;
+  --spacing-nav-mega-gap: clamp(2rem, 6vw, 6rem);
+  --spacing-nav-mega-link-padding-block: 0.75rem;
+  --spacing-size-dialog-padding: clamp(1.25rem, 3vw, 2rem);
   --spacing-product-details-bottom: 3rem;
   --spacing-footer-copy-max: 20rem;
   --spacing-brand-mark-edge: 4vw;
@@ -228,11 +253,13 @@
   /* Shadows */
   --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
   --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-lg:
+    0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
   --shadow-xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
 
   /* Aspect ratios */
   --aspect-portrait: 4/5;
+  --aspect-square: 1/1;
   --aspect-landscape: 16/9;
 }
 
@@ -437,7 +464,10 @@
     block-size: var(--spacing-filter-swatch);
     inline-size: var(--spacing-filter-swatch);
     border-radius: var(--radius-badge);
-    background: var(--filter-swatch-color, var(--swatch-color, var(--color-surface)));
+    background: var(
+      --filter-swatch-color,
+      var(--swatch-color, var(--color-surface))
+    );
   }
   .filter-checkbox[aria-checked="true"],
   .filter-checkbox[aria-pressed="true"],
@@ -538,7 +568,12 @@
     outline-offset: 2px;
   }
   @media (hover: hover) {
-    .option-pill:not([aria-pressed="true"], [aria-current="true"], .is-selected, :disabled):hover {
+    .option-pill:not(
+        [aria-pressed="true"],
+        [aria-current="true"],
+        .is-selected,
+        :disabled
+      ):hover {
       background: var(--color-surface-secondary);
     }
   }
@@ -974,13 +1009,19 @@
 }
 
 @utility bleed-full {
-  margin-inline: calc(-1 * var(--spacing-margin) - max(0px, (100vw - var(--spacing-page)) / 2));
-  width: calc(100% + 2 * var(--spacing-margin) + max(0px, 100vw - var(--spacing-page)));
+  margin-inline: calc(
+    -1 * var(--spacing-margin) - max(0px, (100vw - var(--spacing-page)) / 2)
+  );
+  width: calc(
+    100% + 2 * var(--spacing-margin) + max(0px, 100vw - var(--spacing-page))
+  );
 }
 
 @utility gallery-bleed-start {
   margin-inline-start: calc(
     -1 * var(--spacing-margin) - max(0px, (100vw - var(--spacing-page)) / 2)
   );
-  width: calc(100% + var(--spacing-margin) + max(0px, (100vw - var(--spacing-page)) / 2));
+  width: calc(
+    100% + var(--spacing-margin) + max(0px, (100vw - var(--spacing-page)) / 2)
+  );
 }

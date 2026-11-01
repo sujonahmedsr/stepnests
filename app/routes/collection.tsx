@@ -1,7 +1,7 @@
 import { AnalyticsEvent, getSortByValue } from "@shopify/hydrogen";
 import { CollectionProvider, useCollection } from "@shopify/hydrogen/react";
 import { useEffect } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router";
+import { Link, redirect, useNavigate, useSearchParams } from "react-router";
 
 import {
   ActiveFilterChips,
@@ -15,7 +15,10 @@ import {
 import { ProductCard } from "~/components/ProductCard";
 import { loadCollectionPage } from "~/lib/collection";
 import { storefrontClientContext } from "~/lib/storefront";
-import { formatPageTitle, getShopNameFromRootMatch } from "~/lib/storefront-shop";
+import {
+  formatPageTitle,
+  getShopNameFromRootMatch,
+} from "~/lib/storefront-shop";
 
 import type { Route } from "./+types/collection";
 
@@ -34,6 +37,16 @@ export async function loader({ context, params, request }: Route.LoaderArgs) {
   const handle = params.handle;
   if (!handle) throw new Response("Not Found", { status: 404 });
 
+  const collectionAliases: Record<string, string> = {
+    "men-sports": "men-sports-running",
+    "women-sports": "women-sports-running",
+  };
+  const canonicalHandle = collectionAliases[handle];
+  if (canonicalHandle) {
+    const url = new URL(request.url);
+    throw redirect(`/collections/${canonicalHandle}${url.search}`);
+  }
+
   const storefrontClient = context.get(storefrontClientContext);
   return loadCollectionPage({ storefrontClient, handle, request });
 }
@@ -41,7 +54,11 @@ export async function loader({ context, params, request }: Route.LoaderArgs) {
 type CollectionData = Route.ComponentProps["loaderData"]["collection"];
 type ProductNode = Route.ComponentProps["loaderData"]["products"][number];
 
-function CollectionViewedTracker({ collection }: { collection: CollectionData }) {
+function CollectionViewedTracker({
+  collection,
+}: {
+  collection: CollectionData;
+}) {
   useEffect(() => {
     window.Shopify?.analytics?.publish(AnalyticsEvent.COLLECTION_VIEWED, {
       collection: {
@@ -54,7 +71,13 @@ function CollectionViewedTracker({ collection }: { collection: CollectionData })
   return null;
 }
 
-function BreadcrumbJsonLd({ collection, origin }: { collection: CollectionData; origin: string }) {
+function BreadcrumbJsonLd({
+  collection,
+  origin,
+}: {
+  collection: CollectionData;
+  origin: string;
+}) {
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
@@ -104,10 +127,12 @@ function Breadcrumb({ collection }: { collection: CollectionData }) {
 
 function CollectionHeader({ collection }: { collection: CollectionData }) {
   return (
-    <div className="mb-8">
+    <div className="collection-page-header mb-8">
       <div className="grid gap-6 md:grid-cols-[1fr_16rem] md:items-start">
         <div>
-          <h1 className="type-display text-on-surface mb-2">{collection.title}</h1>
+          <h1 className="type-display text-on-surface mb-2">
+            {collection.title}
+          </h1>
           {collection.description ? (
             <div className="richtext text-on-surface-secondary type-body-sm max-w-2xl">
               <p>{collection.description}</p>
@@ -141,7 +166,7 @@ function ProductGrid({ products }: { products: readonly ProductNode[] }) {
         id="product-grid"
         data-testid="product-grid"
         role="list"
-        className="grid grid-cols-2 gap-x-1 gap-y-10 md:grid-cols-3 xl:grid-cols-4"
+        className="product-grid-cards grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4"
       >
         {products.map((product) => (
           <li key={product.handle}>
@@ -171,7 +196,11 @@ function EmptyState({ collectionPath }: { collectionPath: string }) {
   );
 }
 
-function CollectionResults({ loaderData }: { loaderData: Route.ComponentProps["loaderData"] }) {
+function CollectionResults({
+  loaderData,
+}: {
+  loaderData: Route.ComponentProps["loaderData"];
+}) {
   const browseState = useCollection();
   const isUpdating = browseState.status === "loading";
   const collectionPath = `/collections/${loaderData.collection.handle}`;
@@ -228,10 +257,15 @@ export default function CollectionRoute({ loaderData }: Route.ComponentProps) {
   const [searchParams] = useSearchParams();
   return (
     <CollectionProvider
-      data={{ handle: loaderData.collection.handle, dataSearch: loaderData.dataSearch }}
+      data={{
+        handle: loaderData.collection.handle,
+        dataSearch: loaderData.dataSearch,
+      }}
       urlSearch={searchParams.toString()}
       onChange={(search) => {
-        const nextParams = new URLSearchParams(search.startsWith("?") ? search.slice(1) : search);
+        const nextParams = new URLSearchParams(
+          search.startsWith("?") ? search.slice(1) : search,
+        );
         nextParams.delete("after");
         nextParams.delete("before");
         const nextSearch = nextParams.toString();
@@ -246,14 +280,19 @@ export default function CollectionRoute({ loaderData }: Route.ComponentProps) {
     >
       <CollectionViewedTracker collection={loaderData.collection} />
       <main className="flex-1" id="main-content" tabIndex={-1}>
-        <div className="max-w-page px-margin mx-auto w-full py-8 md:py-12">
-          <BreadcrumbJsonLd collection={loaderData.collection} origin={loaderData.origin} />
+        <div className="collection-page max-w-page px-margin mx-auto w-full py-8 md:py-12">
+          <BreadcrumbJsonLd
+            collection={loaderData.collection}
+            origin={loaderData.origin}
+          />
           <Breadcrumb collection={loaderData.collection} />
           <CollectionHeader collection={loaderData.collection} />
           <div className="lg:grid lg:grid-cols-[15rem_1fr] lg:gap-10">
             <aside className="hidden lg:block" aria-label="Filters">
               <div className="sticky top-8">
-                <h2 className="type-heading-sm text-on-surface mb-2">Filters</h2>
+                <h2 className="type-heading-sm text-on-surface mb-2">
+                  Filters
+                </h2>
                 <FacetForm
                   availableFilters={loaderData.availableFilters}
                   currencyCode={loaderData.currencyCode}

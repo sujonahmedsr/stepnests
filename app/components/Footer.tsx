@@ -10,9 +10,7 @@ const linkClass =
 export function Footer({ shopInfo }: { shopInfo: StorefrontShop }) {
   return (
     <footer className="site-footer">
-      <div
-        className="site-footer__inner max-w-page px-margin mx-auto grid grid-cols-1 gap-8 text-sm md:grid-cols-2"
-      >
+      <div className="site-footer__inner max-w-page px-margin mx-auto grid grid-cols-1 gap-8 text-sm md:grid-cols-2">
         <div className="min-w-0 wrap-anywhere">
           <h2 className="site-footer__brand mb-3">StepNests</h2>
           <p className="site-footer__copy max-w-xs">
@@ -28,12 +26,12 @@ export function Footer({ shopInfo }: { shopInfo: StorefrontShop }) {
           </h2>
           <ul role="list" className="site-footer__links flex flex-col">
             <li>
-              <Link to="/collections" className={linkClass}>
+              <Link to="/collections/all" className={linkClass}>
                 Shop all
               </Link>
             </li>
             <li>
-              <Link to="/#new-arrivals" className={linkClass}>
+              <Link to="/collections/new-arrivals" className={linkClass}>
                 New arrivals
               </Link>
             </li>

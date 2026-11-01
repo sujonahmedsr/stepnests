@@ -1,5 +1,6 @@
 import {
   AnalyticsEvent,
+  Cache,
   buildProductSelectionSearchParams,
   canAddToCart,
   getSelectedProductOptions,
@@ -11,11 +12,19 @@ import { useEffect, useMemo, useState, type MouseEvent } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
 
 import { ProductCard, PRODUCT_CARD_FRAGMENT } from "~/components/ProductCard";
-import { openCartDrawer } from "~/lib/cart-drawer";
+import {
+  closeDialogFallback,
+  openCartDrawer,
+  openDialogFallback,
+} from "~/lib/cart-drawer";
 import { formatPrice, salePercent } from "~/lib/money";
 import { ProductProvider, useProductForm } from "~/lib/product";
+import { shopifyImageSrcSet, shopifyImageUrl } from "~/lib/shopify-image";
 import { storefrontClientContext } from "~/lib/storefront";
-import { formatPageTitle, getShopNameFromRootMatch } from "~/lib/storefront-shop";
+import {
+  formatPageTitle,
+  getShopNameFromRootMatch,
+} from "~/lib/storefront-shop";
 
 import type { Route } from "./+types/product";
 
@@ -65,6 +74,7 @@ const PRODUCT_QUERY = gql(
         handle
         title
         vendor
+        availableForSale
         description
         descriptionHtml
         requiresSellingPlan
@@ -128,23 +138,54 @@ const PRODUCT_QUERY = gql(
           ...ProductVariantFields
         }
       }
-      products(first: 5) {
-        nodes {
-          ...ProductCard
-        }
+    }
+  `,
+  [PRODUCT_VARIANT_FRAGMENT],
+);
+
+const PRODUCT_RECOMMENDATIONS_QUERY = gql(
+  `
+    query ProductRecommendations(
+      $country: CountryCode
+      $language: LanguageCode
+      $productId: ID!
+    ) @inContext(country: $country, language: $language) {
+      productRecommendations(productId: $productId) {
+        ...ProductCard
       }
     }
   `,
-  [PRODUCT_VARIANT_FRAGMENT, PRODUCT_CARD_FRAGMENT],
+  [PRODUCT_CARD_FRAGMENT],
 );
 
-export function meta({ matches }: Route.MetaArgs) {
+export function meta({ data, matches }: Route.MetaArgs) {
   const shopName = getShopNameFromRootMatch(matches[0]);
+  const product = data?.product;
+  if (!product) return [{ title: formatPageTitle("Product", shopName) }];
+
+  const description =
+    product.description?.trim().slice(0, 160) ||
+    `Discover ${product.title} at ${shopName}.`;
+  const image = product.featuredImage?.url;
+  const price = product.priceRange.minVariantPrice;
+
   return [
-    { title: formatPageTitle("Product", shopName) },
+    { title: formatPageTitle(product.title, shopName) },
+    { name: "description", content: description },
     {
-      name: "description",
-      content: `Shop the ${shopName} product detail page.`,
+      tagName: "link",
+      rel: "canonical",
+      href: `${data.origin}/products/${product.handle}`,
+    },
+    { property: "og:type", content: "product" },
+    { property: "og:title", content: product.title },
+    { property: "og:description", content: description },
+    ...(image ? [{ property: "og:image", content: image }] : []),
+    { property: "product:price:amount", content: price.amount },
+    { property: "product:price:currency", content: price.currencyCode },
+    {
+      name: "twitter:card",
+      content: image ? "summary_large_image" : "summary",
     },
   ];
 }
@@ -159,21 +200,37 @@ export async function loader({ context, params, request }: Route.LoaderArgs) {
   });
   const { data } = await storefrontClient.graphql(PRODUCT_QUERY, {
     variables: { handle, selectedOptions },
+    cache: Cache.short(),
   });
 
   if (!data?.product) throw new Response("Not Found", { status: 404 });
 
+  const recommendations = await storefrontClient.graphql(
+    PRODUCT_RECOMMENDATIONS_QUERY,
+    {
+      variables: { productId: data.product.id },
+      cache: Cache.long(),
+    },
+  );
+  if (recommendations.errors?.length) {
+    throw new Response("Product recommendations unavailable", { status: 502 });
+  }
+
   return {
     product: data.product,
-    relatedProducts: data.products.nodes
+    relatedProducts: (recommendations.data?.productRecommendations ?? [])
       .filter((product) => product.handle !== data.product?.handle)
       .slice(0, 4),
+    origin: new URL(request.url).origin,
   };
 }
 
 type ProductData = Route.ComponentProps["loaderData"]["product"];
-type ProductVariant = NonNullable<ProductData["selectedOrFirstAvailableVariant"]>;
-type RelatedProduct = Route.ComponentProps["loaderData"]["relatedProducts"][number];
+type ProductVariant = NonNullable<
+  ProductData["selectedOrFirstAvailableVariant"]
+>;
+type RelatedProduct =
+  Route.ComponentProps["loaderData"]["relatedProducts"][number];
 
 type ProductImage = {
   id?: string | null;
@@ -222,7 +279,9 @@ function buildSwatchLookup(product: ProductData) {
 }
 
 function hasSwatchData(product: ProductData, optionName: string) {
-  const option = product.options.find((candidate) => candidate.name === optionName);
+  const option = product.options.find(
+    (candidate) => candidate.name === optionName,
+  );
   return Boolean(
     option?.optionValues.some(
       (value) => value.swatch?.color || value.swatch?.image?.previewImage?.url,
@@ -252,7 +311,10 @@ function ProductViewedTracker({ product }: { product: ProductData }) {
   return null;
 }
 
-function useGalleryImages(product: ProductData, selectedVariant: ProductVariant | null) {
+function useGalleryImages(
+  product: ProductData,
+  selectedVariant: ProductVariant | null,
+) {
   return useMemo(() => {
     const images: ProductImage[] = [];
     const seen = new Set<string>();
@@ -262,7 +324,11 @@ function useGalleryImages(product: ProductData, selectedVariant: ProductVariant 
       images.push(image);
     };
 
-    addImage(selectedVariant?.image ?? product.featuredImage ?? product.images.nodes[0]);
+    addImage(
+      selectedVariant?.image ??
+        product.featuredImage ??
+        product.images.nodes[0],
+    );
     for (const image of product.images.nodes) addImage(image);
     return images;
   }, [product, selectedVariant]);
@@ -283,20 +349,23 @@ function ProductGallery({
   const images = useGalleryImages(product, selectedVariant);
   const primaryImageUrl = images[0]?.url;
   const [activeIndex, setActiveIndex] = useState(0);
+  const activeImage = images[activeIndex] ?? images[0];
 
   useEffect(() => setActiveIndex(0), [primaryImageUrl]);
 
+  if (!activeImage) return null;
+
   return (
-    <div data-testid="product-gallery">
+    <div className="product-gallery" data-testid="product-gallery">
       <div
         role="region"
         aria-roledescription="carousel"
         aria-label={product.title}
-        className="relative grid"
+        className="product-gallery__mobile relative"
       >
         <div
           data-product-gallery-track
-          className="flex snap-x snap-mandatory overflow-x-auto md:grid md:grid-cols-2 md:overflow-visible"
+          className="flex snap-x snap-mandatory overflow-x-auto"
           style={{ scrollbarWidth: "none" }}
           tabIndex={0}
           onScroll={(event) => {
@@ -312,25 +381,29 @@ function ProductGallery({
               role="group"
               aria-roledescription="slide"
               aria-label={`Slide ${index + 1} of ${images.length}`}
-              className="w-full shrink-0 snap-center contain-paint md:w-auto md:shrink"
+              className="w-full shrink-0 snap-center"
             >
-              <div className="bg-surface-secondary aspect-square overflow-hidden">
+              <div className="bg-surface-secondary aspect-portrait overflow-hidden">
                 <img
-                  src={image.url}
+                  src={shopifyImageUrl(image.url, { width: 900 })}
+                  srcSet={shopifyImageSrcSet(image.url, [480, 640, 900, 1200])}
+                  sizes="100vw"
                   alt={image.altText ?? product.title}
                   width={image.width ?? undefined}
                   height={image.height ?? undefined}
-                  className="h-full w-full object-cover"
+                  className="h-full w-full object-contain"
                   loading={index === 0 ? "eager" : "lazy"}
                   fetchPriority={index === 0 ? "high" : "auto"}
-                  data-testid={index === 0 ? "product-gallery-image" : undefined}
+                  data-testid={
+                    index === 0 ? "product-gallery-image" : undefined
+                  }
                 />
               </div>
             </div>
           ))}
         </div>
         {images.length > 1 ? (
-          <div className="absolute inset-x-0 bottom-4 z-10 flex items-center justify-center gap-3 md:hidden">
+          <div className="absolute inset-x-0 bottom-4 z-10 flex items-center justify-center gap-3">
             <div
               data-slideshow-dots
               role="group"
@@ -338,9 +411,51 @@ function ProductGallery({
               className="flex items-center justify-center gap-2"
             >
               {images.map((image, index) => (
-                <span key={image.url} className={galleryDotClass(index === activeIndex)} />
+                <span
+                  key={image.url}
+                  className={galleryDotClass(index === activeIndex)}
+                />
               ))}
             </div>
+          </div>
+        ) : null}
+      </div>
+      <div className="product-gallery__desktop">
+        <div className="product-gallery__hero">
+          <img
+            src={shopifyImageUrl(activeImage.url, { width: 1200 })}
+            srcSet={shopifyImageSrcSet(activeImage.url, [640, 900, 1200, 1600])}
+            sizes="(min-width: 64rem) 60vw, 100vw"
+            alt={activeImage.altText ?? product.title}
+            width={activeImage.width ?? undefined}
+            height={activeImage.height ?? undefined}
+            loading="eager"
+            fetchPriority="high"
+            data-testid="product-gallery-image"
+          />
+        </div>
+        {images.length > 1 ? (
+          <div
+            className="product-gallery__thumbnails"
+            role="group"
+            aria-label="Product images"
+          >
+            {images.map((image, index) => (
+              <button
+                key={image.url}
+                type="button"
+                className="product-gallery__thumbnail"
+                aria-label={`Show image ${index + 1} of ${images.length}`}
+                aria-pressed={index === activeIndex}
+                onClick={() => setActiveIndex(index)}
+              >
+                <img
+                  src={shopifyImageUrl(image.url, { width: 160 })}
+                  alt=""
+                  loading="lazy"
+                />
+              </button>
+            ))}
           </div>
         ) : null}
       </div>
@@ -372,7 +487,10 @@ function PriceBlock({
               <span className="sr-only">Regular price: </span>
               {formatPrice(compareAt)}
             </s>
-            <span className="text-sale text-sm font-medium" aria-label={`Save ${percent}%`}>
+            <span
+              className="text-sale text-sm font-medium"
+              aria-label={`Save ${percent}%`}
+            >
               (-{percent}%)
             </span>
           </>
@@ -387,7 +505,11 @@ function PriceBlock({
   );
 }
 
-function InventoryHint({ selectedVariant }: { selectedVariant: ProductVariant | null }) {
+function InventoryHint({
+  selectedVariant,
+}: {
+  selectedVariant: ProductVariant | null;
+}) {
   if (!selectedVariant) return null;
   if (!selectedVariant.availableForSale) {
     return (
@@ -413,7 +535,9 @@ function InventoryHint({ selectedVariant }: { selectedVariant: ProductVariant | 
           className="bg-warning inline-block h-2 w-2 shrink-0 rounded-full"
           aria-hidden="true"
         />
-        <span className="text-warning font-medium">Only {quantity} left in stock</span>
+        <span className="text-warning font-medium">
+          Only {quantity} left in stock
+        </span>
       </div>
     </div>
   );
@@ -433,18 +557,120 @@ function isPlainActivation(event: MouseEvent<HTMLAnchorElement>) {
   );
 }
 
+const SIZE_GUIDE_DIALOG_ID = "product-size-guide";
+
+const FOOTWEAR_SIZE_GUIDE = [
+  ["36", "22.5"],
+  ["37", "23.0"],
+  ["38", "23.5"],
+  ["39", "24.5"],
+  ["40", "25.0"],
+  ["41", "25.5"],
+  ["42", "26.5"],
+  ["43", "27.0"],
+  ["44", "28.0"],
+  ["45", "28.5"],
+] as const;
+
+function SizeGuideDialog() {
+  return (
+    <>
+      <button
+        type="button"
+        commandfor={SIZE_GUIDE_DIALOG_ID}
+        command="show-modal"
+        className="text-on-surface-secondary min-h-touch-target underline underline-offset-4"
+        aria-haspopup="dialog"
+        aria-controls={SIZE_GUIDE_DIALOG_ID}
+        onClick={() => openDialogFallback(SIZE_GUIDE_DIALOG_ID)}
+      >
+        Size guide
+      </button>
+      <dialog
+        id={SIZE_GUIDE_DIALOG_ID}
+        className="size-guide-dialog"
+        closedby="any"
+        aria-labelledby="product-size-guide-title"
+        aria-describedby="product-size-guide-note"
+      >
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="eyebrow">Find your fit</p>
+            <h2 id="product-size-guide-title" className="type-heading-md mt-2">
+              Footwear size guide
+            </h2>
+          </div>
+          <button
+            type="button"
+            commandfor={SIZE_GUIDE_DIALOG_ID}
+            command="close"
+            className="button-icon inline-flex h-11 w-11 shrink-0 items-center justify-center"
+            aria-label="Close size guide"
+            onClick={() => closeDialogFallback(SIZE_GUIDE_DIALOG_ID)}
+          >
+            <img
+              src="/icons/icon-x.svg"
+              alt=""
+              aria-hidden="true"
+              className="icon-size"
+            />
+          </button>
+        </div>
+        <p
+          id="product-size-guide-note"
+          className="text-on-surface-secondary my-4 text-sm"
+        >
+          Measure your foot from heel to longest toe while standing. Lengths are
+          approximate; check the product packaging if you are between sizes.
+        </p>
+        <div className="overflow-x-auto">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">EU size</th>
+                <th scope="col">Foot length (cm)</th>
+              </tr>
+            </thead>
+            <tbody>
+              {FOOTWEAR_SIZE_GUIDE.map(([size, length]) => (
+                <tr key={size}>
+                  <th scope="row">{size}</th>
+                  <td>{length}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </dialog>
+    </>
+  );
+}
+
 function VariantOptions({ product }: { product: ProductData }) {
   const { options, register } = useProductForm();
   const swatches = useMemo(() => buildSwatchLookup(product), [product]);
   const location = useLocation();
-  const baseParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const baseParams = useMemo(
+    () => new URLSearchParams(location.search),
+    [location.search],
+  );
+
+  if (options.every((option) => option.values.length <= 1)) return null;
 
   return (
     <div className="swatch-buttons space-y-4">
+      <div className="flex items-center justify-between gap-4">
+        <p className="eyebrow">Choose your options</p>
+        {options.some((option) => /size/i.test(option.name)) ? (
+          <SizeGuideDialog />
+        ) : null}
+      </div>
       {options.map((option) => {
-        const selectedValue = option.values.find((value) => value.selected)?.name;
+        const selectedValue = option.values.find(
+          (value) => value.selected,
+        )?.name;
         const renderSwatches = hasSwatchData(product, option.name);
-        const isColorOption = option.name.toLowerCase().includes("color");
+        const isColorOption = /colou?r/i.test(option.name);
 
         return (
           <fieldset key={option.name} className="space-y-2">
@@ -452,7 +678,11 @@ function VariantOptions({ product }: { product: ProductData }) {
               {option.name}
               {selectedValue ? `: ${selectedValue}` : ""}
             </legend>
-            <div className="flex flex-wrap gap-2" role="group" aria-label={option.name}>
+            <div
+              className="flex flex-wrap gap-2"
+              role="group"
+              aria-label={option.name}
+            >
               {option.values.map((variantOption) => {
                 const valueName = variantOption.name;
                 const registered = register("optionValue", {
@@ -468,9 +698,13 @@ function VariantOptions({ product }: { product: ProductData }) {
                 );
                 const soldOut = !variantOption.available;
                 const testId = isColorOption ? "color-swatch" : undefined;
-                const swatch = renderSwatches ? swatches.get(`${option.name}:${valueName}`) : null;
+                const swatch = renderSwatches
+                  ? swatches.get(`${option.name}:${valueName}`)
+                  : null;
                 const swatchStyle = swatch?.imageUrl
-                  ? { backgroundImage: `url("${swatch.imageUrl}")` }
+                  ? {
+                      backgroundImage: `url("${shopifyImageUrl(swatch.imageUrl, { width: 96 })}")`,
+                    }
                   : { backgroundColor: swatch?.color ?? undefined };
 
                 const className = renderSwatches
@@ -542,11 +776,11 @@ function VariantOptions({ product }: { product: ProductData }) {
                         ? undefined
                         : (event) => {
                             if (!isPlainActivation(event)) return;
+                            event.preventDefault();
                             registered.onClick();
                             // onSelect has already navigated with the provider's replace
                             // and revalidation settings. Letting Link navigate too would
                             // refetch the loader that a resolved selection just skipped.
-                            event.preventDefault();
                           }
                     }
                   >
@@ -574,7 +808,10 @@ function QuantitySelector({
 
   return (
     <div className="shrink-0">
-      <label className="text-on-surface mb-2 block text-sm font-medium" htmlFor="quantity">
+      <label
+        className="text-on-surface mb-2 block text-sm font-medium"
+        htmlFor="quantity"
+      >
         Quantity
       </label>
       <div
@@ -588,7 +825,12 @@ function QuantitySelector({
           onClick={() => setQuantity(clamp(quantity - 1))}
           disabled={quantity <= 1}
         >
-          <img src="/icons/icon-minus.svg" alt="" className="size-4" aria-hidden="true" />
+          <img
+            src="/icons/icon-minus.svg"
+            alt=""
+            className="size-4"
+            aria-hidden="true"
+          />
         </button>
         <input
           type="number"
@@ -600,7 +842,9 @@ function QuantitySelector({
           className="number-reset text-on-surface h-11 w-12 rounded-none border-0 bg-transparent p-0 text-center text-sm"
           aria-label="Quantity"
           onChange={(event) =>
-            setQuantity(clamp(Number.parseInt(event.currentTarget.value, 10) || 1))
+            setQuantity(
+              clamp(Number.parseInt(event.currentTarget.value, 10) || 1),
+            )
           }
         />
         <button
@@ -610,7 +854,12 @@ function QuantitySelector({
           onClick={() => setQuantity(clamp(quantity + 1))}
           disabled={quantity >= 99}
         >
-          <img src="/icons/icon-plus.svg" alt="" className="size-4" aria-hidden="true" />
+          <img
+            src="/icons/icon-plus.svg"
+            alt=""
+            className="size-4"
+            aria-hidden="true"
+          />
         </button>
       </div>
     </div>
@@ -630,7 +879,12 @@ function AddToCart({
 }) {
   const { options, register, formProps, errors, pending } = useProductForm();
   const addable = canAddToCart(product, options);
-  const buttonText = addable ? "Add to cart" : selectedVariant ? "Sold out" : "Select options";
+  const buttonText = purchaseButtonText(
+    product,
+    options,
+    selectedVariant,
+    addable,
+  );
 
   return (
     <>
@@ -658,7 +912,8 @@ function AddToCart({
           />
         </div>
       ) : null}
-      {[...errors.userErrors, ...errors.warnings, ...errors.networkErrors].length ? (
+      {[...errors.userErrors, ...errors.warnings, ...errors.networkErrors]
+        .length ? (
         <div className="mt-3 grid gap-1 text-sm" role="alert">
           {errors.userErrors.map((error) => (
             <p key={error.message} className="text-critical">
@@ -681,17 +936,166 @@ function AddToCart({
   );
 }
 
-function ProductInfo({
+function purchaseButtonText(
+  product: ProductData,
+  options: ReturnType<typeof useProductForm>["options"],
+  selectedVariant: ProductVariant | null,
+  addable: boolean,
+) {
+  if (addable) return "Add to cart";
+  if (product.requiresSellingPlan) return "Unavailable";
+  if (selectedVariant && !selectedVariant.availableForSale) return "Sold out";
+  if (!selectedVariant && options.some((option) => option.values.length > 1))
+    return "Select options";
+  return "Sold out";
+}
+
+function ProductTrustStrip() {
+  return (
+    <ul
+      className="product-trust-list"
+      role="list"
+      aria-label="Shopping benefits"
+    >
+      <li className="product-trust-item">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          aria-hidden="true"
+        >
+          <path d="M3 6h11v11H3zM14 10h4l3 3v4h-7z" />
+          <circle cx="7.5" cy="18.5" r="1.5" />
+          <circle cx="18" cy="18.5" r="1.5" />
+        </svg>
+        <span>Cash on delivery available</span>
+      </li>
+      <li className="product-trust-item">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          aria-hidden="true"
+        >
+          <path d="M20 7v5h-5M4 17v-5h5" />
+          <path d="M5.5 9a7 7 0 0 1 11.6-2L20 9M4 15l2.9 2a7 7 0 0 0 11.6-2" />
+        </svg>
+        <span>7-day size exchange</span>
+      </li>
+      <li className="product-trust-item">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          aria-hidden="true"
+        >
+          <path d="M12 3 19 6v5c0 4.5-2.8 7.7-7 10-4.2-2.3-7-5.5-7-10V6l7-3Z" />
+          <path d="m9 12 2 2 4-4" />
+        </svg>
+        <span>Secure Shopify checkout</span>
+      </li>
+    </ul>
+  );
+}
+
+function StickyMobilePurchase({
   product,
   selectedVariant,
+  quantity,
 }: {
   product: ProductData;
   selectedVariant: ProductVariant | null;
+  quantity: number;
 }) {
-  const [quantity, setQuantity] = useState(1);
+  const { options, register, formProps, pending } = useProductForm();
+  const addable = canAddToCart(product, options);
+  const buttonText = purchaseButtonText(
+    product,
+    options,
+    selectedVariant,
+    addable,
+  );
+  const price = selectedVariant?.price ?? product.priceRange.minVariantPrice;
 
   return (
-    <div className="flex flex-col gap-6 md:sticky md:top-8 md:self-start">
+    <div className="product-sticky-buy" data-testid="product-sticky-buy">
+      <div className="product-sticky-buy__meta">
+        <p className="product-sticky-buy__title">{product.title}</p>
+        <p className="product-sticky-buy__price">{formatPrice(price)}</p>
+      </div>
+      <form {...formProps({ afterSubmit: openCartDrawer })}>
+        <input type="hidden" {...register("merchandiseId", {})} />
+        <input type="hidden" {...register("quantity", { value: quantity })} />
+        <button
+          {...register("addToCart", {})}
+          className="rounded-button button-primary inline-flex items-center justify-center px-4 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50"
+          disabled={!addable || pending}
+        >
+          {buttonText}
+        </button>
+      </form>
+    </div>
+  );
+}
+
+function ProductJsonLd({
+  product,
+  origin,
+}: {
+  product: ProductData;
+  origin: string;
+}) {
+  const { selectedVariant } = useProductForm();
+  const price = selectedVariant?.price ?? product.priceRange.minVariantPrice;
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: product.title,
+    description: product.description ?? undefined,
+    image: product.images.nodes.map((image) => image.url),
+    sku: selectedVariant?.sku ?? undefined,
+    brand: product.vendor
+      ? { "@type": "Brand", name: product.vendor }
+      : undefined,
+    offers: {
+      "@type": "Offer",
+      url: `${origin}/products/${product.handle}`,
+      price: price.amount,
+      priceCurrency: price.currencyCode,
+      availability:
+        (selectedVariant?.availableForSale ?? product.availableForSale)
+          ? "https://schema.org/InStock"
+          : "https://schema.org/OutOfStock",
+      itemCondition: "https://schema.org/NewCondition",
+    },
+  };
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{
+        __html: JSON.stringify(structuredData).replace(/</g, "\\u003c"),
+      }}
+    />
+  );
+}
+
+function ProductInfo({
+  product,
+  selectedVariant,
+  quantity,
+  setQuantity,
+}: {
+  product: ProductData;
+  selectedVariant: ProductVariant | null;
+  quantity: number;
+  setQuantity: (quantity: number) => void;
+}) {
+  return (
+    <div className="product-info flex flex-col gap-6 lg:sticky lg:top-24 lg:self-start">
       <div className="pt-4 md:pt-8">
         {product.vendor ? (
           <p className="type-body-sm text-on-surface-secondary mb-4 tracking-wide uppercase">
@@ -705,12 +1109,6 @@ function ProductInfo({
 
       <span className="sr-only" aria-live="polite" id="inventory-status" />
 
-      {product.description ? (
-        <div className="type-body-sm text-on-surface-secondary leading-relaxed">
-          {product.description}
-        </div>
-      ) : null}
-
       <div data-product-form>
         <span className="sr-only" aria-live="polite" data-add-to-cart-status />
         <VariantOptions product={product} />
@@ -722,10 +1120,16 @@ function ProductInfo({
         />
       </div>
 
+      <ProductTrustStrip />
+
       <h2 className="sr-only">Product details</h2>
-      <details className="group border-border border-t border-b" name="product-details" open>
+      <details
+        className="product-details group border-border border-t border-b"
+        name="product-details"
+        open
+      >
         <summary className="marker-hidden text-on-surface hover:text-on-surface-secondary flex cursor-pointer items-center justify-between px-1 py-4 text-sm font-medium">
-          <span className="text-sm font-medium">Description</span>
+          <span className="text-sm font-medium">Product details</span>
           <span
             className="ms-4 size-4 shrink-0 group-open:rotate-180 motion-safe:transition-transform motion-safe:duration-200"
             aria-hidden="true"
@@ -735,26 +1139,82 @@ function ProductInfo({
         </summary>
         <div className="richtext text-on-surface-secondary px-1 pb-4 text-sm">
           {product.descriptionHtml ? (
-            <div dangerouslySetInnerHTML={{ __html: product.descriptionHtml }} />
+            <div
+              dangerouslySetInnerHTML={{ __html: product.descriptionHtml }}
+            />
           ) : (
             <p>{product.description}</p>
           )}
+        </div>
+      </details>
+      <details
+        className="product-details group border-border border-b"
+        name="product-details"
+      >
+        <summary className="marker-hidden text-on-surface hover:text-on-surface-secondary flex cursor-pointer items-center justify-between px-1 py-4 text-sm font-medium">
+          <span>Delivery &amp; exchange</span>
+          <span
+            className="ms-4 size-4 shrink-0 group-open:rotate-180 motion-safe:transition-transform motion-safe:duration-200"
+            aria-hidden="true"
+          >
+            <img src="/icons/icon-chevron-down.svg" alt="" className="size-4" />
+          </span>
+        </summary>
+        <div className="richtext text-on-surface-secondary px-1 pb-4 text-sm">
+          <p>Cash on delivery is available at checkout across Bangladesh.</p>
+          <p>
+            Request a size exchange within 7 days of delivery. Shoes must be
+            unworn and returned with their original packaging.
+          </p>
         </div>
       </details>
     </div>
   );
 }
 
-function ProductPageContent({ product }: { product: ProductData }) {
+function ProductPageContent({
+  product,
+  origin,
+}: {
+  product: ProductData;
+  origin: string;
+}) {
   const { selectedVariant } = useProductForm();
+  const [quantity, setQuantity] = useState(1);
 
   return (
-    <section className="max-w-page px-margin mx-auto w-full pb-4">
-      <div className="product-grid mb-16 grid grid-cols-1 gap-6 md:gap-12">
-        <ProductGallery product={product} selectedVariant={selectedVariant} />
-        <ProductInfo product={product} selectedVariant={selectedVariant} />
-      </div>
-    </section>
+    <>
+      <ProductJsonLd product={product} origin={origin} />
+      <section className="product-page max-w-page px-margin mx-auto w-full pb-4">
+        <nav aria-label="Breadcrumb" className="product-breadcrumb">
+          <ol>
+            <li>
+              <Link to="/">Home</Link>
+            </li>
+            <li aria-hidden="true">/</li>
+            <li>
+              <Link to="/collections/all">Shop</Link>
+            </li>
+            <li aria-hidden="true">/</li>
+            <li aria-current="page">{product.title}</li>
+          </ol>
+        </nav>
+        <div className="product-grid mb-16 grid grid-cols-1 gap-6 md:gap-12">
+          <ProductGallery product={product} selectedVariant={selectedVariant} />
+          <ProductInfo
+            product={product}
+            selectedVariant={selectedVariant}
+            quantity={quantity}
+            setQuantity={setQuantity}
+          />
+        </div>
+      </section>
+      <StickyMobilePurchase
+        product={product}
+        selectedVariant={selectedVariant}
+        quantity={quantity}
+      />
+    </>
   );
 }
 
@@ -773,7 +1233,7 @@ function RelatedProducts({ products }: { products: RelatedProduct[] }) {
         <div className="max-w-page px-margin mx-auto contain-paint">
           <ul
             role="list"
-            className="grid grid-cols-1 gap-x-1 gap-y-10 md:grid-cols-2 lg:grid-cols-4"
+            className="product-grid-cards grid grid-cols-2 lg:grid-cols-4"
           >
             {products.map((product) => (
               <li key={product.handle}>
@@ -788,7 +1248,7 @@ function RelatedProducts({ products }: { products: RelatedProduct[] }) {
 }
 
 export default function ProductRoute({ loaderData }: Route.ComponentProps) {
-  const { product, relatedProducts } = loaderData;
+  const { product, relatedProducts, origin } = loaderData;
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -807,13 +1267,15 @@ export default function ProductRoute({ loaderData }: Route.ComponentProps) {
         void navigate(url, {
           replace: true,
           preventScrollReset: true,
-          ...(result.status === "resolved" ? { defaultShouldRevalidate: false } : {}),
+          ...(result.status === "resolved"
+            ? { defaultShouldRevalidate: false }
+            : {}),
         });
       }}
     >
       <ProductViewedTracker product={product} />
       <main className="flex-1" id="main-content" tabIndex={-1}>
-        <ProductPageContent product={product} />
+        <ProductPageContent product={product} origin={origin} />
         <RelatedProducts products={relatedProducts} />
       </main>
     </ProductProvider>

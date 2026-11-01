@@ -3,7 +3,10 @@ import { Link } from "react-router";
 import { CollectionCard } from "~/components/CollectionCard";
 import { loadCollectionsPage } from "~/lib/collections";
 import { storefrontClientContext } from "~/lib/storefront";
-import { formatPageTitle, getShopNameFromRootMatch } from "~/lib/storefront-shop";
+import {
+  formatPageTitle,
+  getShopNameFromRootMatch,
+} from "~/lib/storefront-shop";
 
 import type { Route } from "./+types/collections";
 
@@ -23,7 +26,8 @@ export async function loader({ context, request }: Route.LoaderArgs) {
   return loadCollectionsPage({ storefrontClient, request });
 }
 
-type CollectionNode = Route.ComponentProps["loaderData"]["collections"]["nodes"][number];
+type CollectionNode =
+  Route.ComponentProps["loaderData"]["collections"]["nodes"][number];
 
 function BreadcrumbJsonLd({ origin }: { origin: string }) {
   const jsonLd = {
@@ -73,12 +77,20 @@ function Breadcrumb() {
   );
 }
 
-function CollectionsGrid({ collections }: { collections: readonly CollectionNode[] }) {
+function CollectionsGrid({
+  collections,
+}: {
+  collections: readonly CollectionNode[];
+}) {
   if (collections.length === 0) {
     return (
       <div className="border-border bg-surface-secondary rounded-card border p-8 text-center">
-        <h2 className="type-heading-md text-on-surface">No collections found</h2>
-        <p className="text-on-surface-secondary mt-2 text-sm">No collections available.</p>
+        <h2 className="type-heading-md text-on-surface">
+          No collections found
+        </h2>
+        <p className="text-on-surface-secondary mt-2 text-sm">
+          No collections available.
+        </p>
       </div>
     );
   }
@@ -87,7 +99,10 @@ function CollectionsGrid({ collections }: { collections: readonly CollectionNode
     <>
       <h2 className="sr-only">Browse collections</h2>
       <div>
-        <ul role="list" className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <ul
+          role="list"
+          className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
+        >
           {collections.map((collection) => (
             <li key={collection.handle}>
               <CollectionCard collection={collection} />
@@ -102,7 +117,7 @@ function CollectionsGrid({ collections }: { collections: readonly CollectionNode
 export default function CollectionsRoute({ loaderData }: Route.ComponentProps) {
   return (
     <main className="flex-1" id="main-content" tabIndex={-1}>
-      <div className="max-w-page px-margin mx-auto w-full py-8 md:py-12">
+      <div className="collection-index max-w-page px-margin mx-auto w-full py-8 md:py-12">
         <BreadcrumbJsonLd origin={loaderData.origin} />
         <Breadcrumb />
         <div className="mb-8">

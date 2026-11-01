@@ -19,7 +19,10 @@ import {
 import { ProductCard } from "~/components/ProductCard";
 import { loadSearchPage, type SearchPageData } from "~/lib/search";
 import { storefrontClientContext } from "~/lib/storefront";
-import { formatPageTitle, getShopNameFromRootMatch } from "~/lib/storefront-shop";
+import {
+  formatPageTitle,
+  getShopNameFromRootMatch,
+} from "~/lib/storefront-shop";
 
 import type { Route } from "./+types/search";
 
@@ -122,7 +125,10 @@ function SearchHeader({ term }: { term: string }) {
         aria-label="Search"
         className="mb-8 max-w-lg"
       >
-        <label htmlFor="search-q" className="text-on-surface mb-1.5 block text-sm font-medium">
+        <label
+          htmlFor="search-q"
+          className="text-on-surface mb-1.5 block text-sm font-medium"
+        >
           Search
         </label>
         <div className="relative">
@@ -146,7 +152,12 @@ function SearchHeader({ term }: { term: string }) {
               aria-label="Clear search"
               className="text-on-surface-secondary hover:text-on-surface focus-visible:outline-accent min-h-touch-target min-w-touch-target absolute end-1 top-1/2 inline-flex -translate-y-1/2 cursor-pointer items-center justify-center rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 motion-safe:transition-colors"
             >
-              <img src="/icons/icon-x.svg" alt="" className="size-4" aria-hidden="true" />
+              <img
+                src="/icons/icon-x.svg"
+                alt=""
+                className="size-4"
+                aria-hidden="true"
+              />
             </Link>
           ) : null}
         </div>
@@ -166,7 +177,7 @@ function ProductGrid({ products }: { products: readonly ProductNode[] }) {
         id="product-grid"
         data-testid="product-grid"
         role="list"
-        className="grid grid-cols-2 gap-x-1 gap-y-10 md:grid-cols-3 xl:grid-cols-4"
+        className="product-grid-cards grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4"
       >
         {products.map((product) => (
           <li key={product.handle}>
@@ -181,7 +192,9 @@ function ProductGrid({ products }: { products: readonly ProductNode[] }) {
 function NoResults({ term }: { term: string }) {
   return (
     <div aria-live="polite">
-      <p className="type-body text-on-surface-secondary">No results for “{term}”</p>
+      <p className="type-body text-on-surface-secondary">
+        No results for “{term}”
+      </p>
       <p className="text-on-surface-secondary mt-2 text-sm">
         Check your spelling or try a more general term.
       </p>
@@ -265,10 +278,15 @@ export default function SearchRoute({ loaderData }: Route.ComponentProps) {
 
   return (
     <CollectionProvider
-      data={{ handle: `search:${loaderData.searchTerm}`, dataSearch: loaderData.dataSearch }}
+      data={{
+        handle: `search:${loaderData.searchTerm}`,
+        dataSearch: loaderData.dataSearch,
+      }}
       urlSearch={searchParams.toString()}
       onChange={(search) => {
-        const nextParams = new URLSearchParams(search.startsWith("?") ? search.slice(1) : search);
+        const nextParams = new URLSearchParams(
+          search.startsWith("?") ? search.slice(1) : search,
+        );
         if (loaderData.searchTerm && !nextParams.has("q"))
           nextParams.set("q", loaderData.searchTerm);
         nextParams.delete("after");
@@ -294,7 +312,9 @@ export default function SearchRoute({ loaderData }: Route.ComponentProps) {
           <BreadcrumbJsonLd origin={loaderData.origin} />
           <Breadcrumb />
           <SearchHeader term={loaderData.searchTerm} />
-          {loaderData.performed ? <SearchResults loaderData={loaderData} /> : null}
+          {loaderData.performed ? (
+            <SearchResults loaderData={loaderData} />
+          ) : null}
         </div>
       </main>
     </CollectionProvider>
