@@ -1211,7 +1211,7 @@ function RelatedProducts({ products }: { products: RelatedProduct[] }) {
         <div className="max-w-page px-margin mx-auto contain-paint">
           <ul
             role="list"
-            className="product-grid-cards grid grid-cols-2 lg:grid-cols-4"
+            className="product-grid-cards grid grid-cols-2 lg:grid-cols-4 2xl:grid-cols-5"
           >
             {products.map((product) => (
               <li key={product.handle}>

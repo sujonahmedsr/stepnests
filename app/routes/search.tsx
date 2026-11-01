@@ -177,7 +177,7 @@ function ProductGrid({ products }: { products: readonly ProductNode[] }) {
         id="product-grid"
         data-testid="product-grid"
         role="list"
-        className="product-grid-cards grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4"
+        className="product-grid-cards grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5"
       >
         {products.map((product) => (
           <li key={product.handle}>

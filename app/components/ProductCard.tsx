@@ -92,7 +92,7 @@ export function ProductCard({ product }: ProductCardProps) {
             <img
               src={shopifyImageUrl(primaryImage.url, { width: 640 })}
               srcSet={shopifyImageSrcSet(primaryImage.url, [320, 480, 640, 960])}
-              sizes="(min-width: 64rem) 25vw, (min-width: 48rem) 33vw, 50vw"
+              sizes="(min-width: 100rem) 20rem, (min-width: 64rem) 25vw, (min-width: 48rem) 33vw, 50vw"
               alt={primaryImage.altText ?? product.title}
               className="product-card__image h-full w-full object-contain"
               loading="lazy"
@@ -105,7 +105,7 @@ export function ProductCard({ product }: ProductCardProps) {
             <img
               src={shopifyImageUrl(hoverImage.url, { width: 640 })}
               srcSet={shopifyImageSrcSet(hoverImage.url, [320, 480, 640, 960])}
-              sizes="(min-width: 64rem) 25vw, (min-width: 48rem) 33vw, 50vw"
+              sizes="(min-width: 100rem) 20rem, (min-width: 64rem) 25vw, (min-width: 48rem) 33vw, 50vw"
               alt={hoverImage.altText ?? ""}
               className="product-card__image h-full w-full object-contain"
               loading="lazy"

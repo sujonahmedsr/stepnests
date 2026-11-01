@@ -132,7 +132,7 @@ function HomeProductSection({
       <div className="max-w-page px-margin mx-auto contain-paint">
         <ul
           role="list"
-          className="product-grid-cards grid grid-cols-2 gap-x-3 gap-y-10 md:grid-cols-3 lg:grid-cols-4"
+          className="product-grid-cards grid grid-cols-2 gap-x-3 gap-y-10 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5"
         >
           {products.map((product) => (
             <li key={product.handle}>
@@ -157,7 +157,7 @@ function ShopByCategory({ collections }: { collections: readonly CollectionCardD
       {collections.length > 0 ? (
         <ul
           role="list"
-          className="max-w-page px-margin mx-auto grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
+          className="max-w-page px-margin mx-auto grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4"
         >
           {collections.map((collection) => (
             <li key={collection.handle}>

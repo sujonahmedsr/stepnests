@@ -143,7 +143,8 @@ No specific metafield format is required.
   in `app/lib/`.
 - `app/tokens.css` is the design-token source of truth. Change its `--color-*`,
   `--font-heading`, `--font-body`, and spacing variables to update the palette,
-  typography, and rhythm; shared components consume those tokens through semantic
+  typography, and rhythm; `--spacing-page` sets the shared desktop content
+  maximum (1600px). Shared components consume those tokens through semantic
   classes in `app/app.css`.
 - Route and component files own page copy. Navigation labels and the price ranges
   are shared in `app/lib/navigation.ts`.
