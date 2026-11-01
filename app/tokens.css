@@ -9,11 +9,12 @@
 
 @theme {
   /* Surfaces */
+  --color-background: #faf7f2;
   --color-surface: #ffffff;
-  --color-surface-secondary: #e3e3e3;
-  --color-on-surface: #000000;
-  --color-on-surface-secondary: #6b7280;
-  --color-border: #e5e7eb;
+  --color-surface-secondary: #f3f0ea;
+  --color-on-surface: #1c1c1c;
+  --color-on-surface-secondary: #6b6b6b;
+  --color-border: #e6e0d6;
 
   /* ─── Brand: the single source of truth ────────────────────────────────
      Change THIS one value to recolor the entire storefront. Every interactive
@@ -23,7 +24,7 @@
      shades, and relative-color oklch() for the softer accent tint. Nothing
      hard-codes the burgundy a second time, so the whole UI re-harmonizes from
      this one knob. */
-  --color-primary: #5d0707;
+  --color-primary: #1c1c1c;
 
   /* Interactive — derived from --color-primary.
      -hover and -active are the brand darkened one and two steps in oklab; this
@@ -36,7 +37,8 @@
   /* Accent — a lighter, desaturated tint of the brand, used for focus rings
      and the accent badge. Relative-color oklch: lift lightness, cut chroma to
      ~40%, ease the hue a touch. Tracks --color-primary automatically. */
-  --color-accent: oklch(from var(--color-primary) calc(l + 0.17) calc(c * 0.39) calc(h - 9));
+  --color-accent: #b8895b;
+  --color-focus: #86613f;
 
   /* Button variants — every brand button maps onto the interactive ramp, so
      they share one hover/active definition rather than re-deriving shades. */
@@ -55,19 +57,27 @@
   --color-button-shop-pay-text: #ffffff;
 
   /* Commerce */
-  --color-sale: #dc2626;
+  --color-sale: #a45f4d;
   --color-compare: var(--color-on-surface-secondary);
 
   /* Semantic states (success/warning darkened from the theme source to meet WCAG AA 4.5:1 as text on white and as badge fills behind white text) */
-  --color-success: #047857;
-  --color-warning: #b45309;
+  --color-success: #52705a;
+  --color-warning: #8b683c;
   --color-critical: var(--color-sale);
-  --color-info: #2563eb;
+  --color-info: #6b6b6b;
 
   /* Overlay */
   --color-overlay: rgb(0 0 0 / 0.95);
   --color-overlay-strong: rgb(0 0 0 / 0.7);
   --color-overlay-subtle: rgb(0 0 0 / 0.5);
+  --color-overlay-soft: rgb(0 0 0 / 0.2);
+  --color-overlay-faint: rgb(0 0 0 / 0.045);
+  --color-text-on-dark: color-mix(in srgb, var(--color-surface) 76%, transparent);
+  --color-text-on-dark-muted: color-mix(in srgb, var(--color-surface) 68%, transparent);
+  --color-accent-on-dark: #d7c3a9;
+  --color-accent-on-light: #86613f;
+  --color-accent-text: #1c1c1c;
+  --color-warm-highlight: #e5ddcb;
   /* ~25% black scrim behind the white check on a selected color swatch */
   --color-overlay-scrim: rgb(0 0 0 / 0.25);
 
@@ -75,27 +85,109 @@
   --color-hover: rgb(0 0 0 / 0.03);
 
   /* Radius */
-  --radius-sm: 0.25rem;
-  --radius: 0.5rem;
-  --radius-lg: 0.75rem;
-  --radius-button: 0.5rem;
+  --radius-sm: 0.125rem;
+  --radius: 0.125rem;
+  --radius-lg: 0.125rem;
+  --radius-button: 0.125rem;
   --radius-card: 0;
-  --radius-input: 0.5rem;
-  --radius-badge: 9999px;
+  --radius-input: 0.125rem;
+  --radius-badge: 0.125rem;
 
-  /* Typography: locked to system-ui for examples. */
-  --font-body: system-ui, -apple-system, sans-serif;
-  --font-heading: system-ui, -apple-system, sans-serif;
+  --font-body: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-heading: "Cormorant Garamond", Georgia, serif;
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --tracking-loose: 0.025em;
+  --tracking-tight: -0.035em;
+  --tracking-heading: -0.045em;
+  --tracking-display: -0.065em;
+  --tracking-brand: -0.06em;
+  --tracking-display-heading: -0.025em;
+  --tracking-section-heading: -0.02em;
+  --tracking-eyebrow: 0.17em;
+  --tracking-caption: 0.2em;
+  --tracking-label: 0.08em;
+  --leading-display: 0.98;
+  --leading-title: 1.02;
+  --leading-heading: 1.1;
+  --leading-product: 1.08;
+  --leading-copy: 1.75;
+  --leading-editorial-copy: 1.8;
+  --leading-label: 1.5;
+  --leading-brand-mark: 0.8;
 
   /* Easing */
-  --ease-ui: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-ui: cubic-bezier(0.2, 0.7, 0.2, 1);
   --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-editorial: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --duration-ui: 240ms;
+  --duration-drawer: 280ms;
+  --duration-reveal: 700ms;
+  --duration-image: 600ms;
 
   /* Layout spacing */
   --spacing-page: 80rem;
   --spacing-margin: 1rem;
-  --spacing-control-height: 2.125rem;
+  --spacing-half: 0.25rem;
+  --spacing-1: 0.5rem;
+  --spacing-2: 1rem;
+  --spacing-4: 2rem;
+  --spacing-5: 2.5rem;
+  --spacing-6: 3rem;
+  --spacing-11: 5.5rem;
+  --spacing-nav-gap: clamp(1.5rem, 3vw, 5.5rem);
+  --spacing-control-height: 2.75rem;
   --spacing-touch-target: 2.75rem;
+  --spacing-section-desktop: clamp(6rem, 8vw, 8rem);
+  --spacing-section-mobile: clamp(3.5rem, 10vw, 4.5rem);
+  --spacing-site-header: 4.5rem;
+  --spacing-hero-copy-max: 42rem;
+  --spacing-hero-copy-max-mobile: 33rem;
+  --spacing-home-collection-card: 19rem;
+  --spacing-home-collection-card-mobile: 14rem;
+  --spacing-product-card-gap-x: 1rem;
+  --spacing-product-card-gap-y: 2.5rem;
+  --spacing-product-card-gap-x-mobile: 0.5rem;
+  --spacing-product-card-gap-y-mobile: 1.75rem;
+  --spacing-product-image-inset: 9%;
+  --spacing-home-hero-max-height: 47rem;
+  --spacing-home-hero-mobile-max-height: 43rem;
+  --spacing-home-hero-offset: 7rem;
+  --spacing-home-hero-mobile-offset: 6.5rem;
+  --spacing-footer-block: 4rem;
+  --spacing-footer-block-mobile: 3rem;
+  --spacing-product-page-top: 1.25rem;
+  --spacing-product-page-top-mobile: 0.75rem;
+  --spacing-product-breadcrumb-gap: 0.5rem;
+  --spacing-product-gallery-gap: 0.5rem;
+  --spacing-product-info-top: 0.5rem;
+  --spacing-product-info-bottom: 2rem;
+  --spacing-collection-page-top: 2rem;
+  --spacing-collection-page-bottom: 5rem;
+  --spacing-collection-page-top-mobile: 1.25rem;
+  --spacing-collection-page-bottom-mobile: 3rem;
+  --spacing-cart-summary-padding: 1.5rem;
+  --spacing-category-grid-gap: 1rem;
+  --spacing-editorial-copy-max: 34rem;
+  --spacing-editorial-mark-size: clamp(22rem, 48vw, 56rem);
+  --spacing-hero-copy-width: 29rem;
+  --spacing-hero-content-block: clamp(5rem, 11vw, 9rem);
+  --spacing-hero-content-block-mobile: 4rem;
+  --spacing-hero-action-gap: 1.5rem;
+  --spacing-hero-button-block: 0.75rem;
+  --spacing-hero-button-inline: 1.25rem;
+  --spacing-hero-caption-bottom: 0.5rem;
+  --spacing-hero-caption-inline: 2rem;
+  --spacing-header-blur: 0.875rem;
+  --spacing-focus-ring: 0.125rem;
+  --spacing-focus-offset: 0.25rem;
+  --spacing-section-title-bottom: 1.5rem;
+  --spacing-product-card-image-padding: 9%;
+  --spacing-product-details-bottom: 3rem;
+  --spacing-footer-copy-max: 20rem;
+  --spacing-brand-mark-edge: 4vw;
+  --spacing-brand-mark-baseline: -0.5em;
   /* Visible facet indicator sizes. These are the painted box/chip; the 44px
      touch target is owned by the wrapping clickable label (min-h/min-w-touch-target),
      NOT by the indicator itself — a 44px painted checkbox reads as oversized. */
@@ -103,7 +195,7 @@
   --spacing-filter-swatch: 1.75rem;
   --spacing-dialog-max-height: 85dvh;
   --spacing-hero: 60dvh;
-  --spacing-drawer-width: 480px;
+  --spacing-drawer-width: 30rem;
   --spacing-header-nav-inline: 6px;
   --spacing-nav-dropdown-offset-inline: 13px;
   --spacing-nav-dropdown-offset-block: 10px;
@@ -130,23 +222,36 @@
 
 :root {
   --type-paragraph-lg-font: var(--font-body);
-  --type-paragraph-lg-size: 18px;
+  --type-paragraph-lg-size: clamp(1.125rem, 1.4vw, 1.25rem);
   --type-paragraph-font: var(--font-body);
-  --type-paragraph-size: 16px;
+  --type-paragraph-size: 1rem;
   --type-paragraph-sm-font: var(--font-body);
-  --type-paragraph-sm-size: 14px;
+  --type-paragraph-sm-size: 0.875rem;
   --type-heading-2xl-font: var(--font-heading);
-  --type-heading-2xl-size: 36px;
+  --type-heading-2xl-size: clamp(3rem, 7vw, 5.5rem);
   --type-heading-xl-font: var(--font-heading);
-  --type-heading-xl-size: 30px;
+  --type-heading-xl-size: clamp(2.25rem, 4vw, 3.25rem);
   --type-heading-lg-font: var(--font-heading);
-  --type-heading-lg-size: 24px;
+  --type-heading-lg-size: clamp(1.75rem, 3vw, 2.25rem);
   --type-heading-md-font: var(--font-heading);
-  --type-heading-md-size: 20px;
+  --type-heading-md-size: clamp(1.375rem, 2.4vw, 1.75rem);
   --type-heading-sm-font: var(--font-heading);
-  --type-heading-sm-size: 18px;
+  --type-heading-sm-size: 1.125rem;
   --type-subheading-font: var(--font-body);
-  --type-subheading-size: 12px;
+  --type-subheading-size: 0.75rem;
+  --type-eyebrow-size: 0.6875rem;
+  --type-caption-size: 0.625rem;
+  --type-card-title-size: 0.9375rem;
+  --type-card-title-size-mobile: 0.8125rem;
+  --type-button-size: 0.875rem;
+  --type-product-price-size: 1.125rem;
+  --type-product-title-size: clamp(2rem, 3.4vw, 3.375rem);
+  --type-brand-title-size: clamp(2.75rem, 6.4vw, 5.75rem);
+  --type-home-title-size: clamp(3.5rem, 8.5vw, 7.5rem);
+  --type-home-section-title-size: clamp(2rem, 4vw, 3.25rem);
+  --type-collection-title-size: clamp(2.25rem, 4vw, 3.25rem);
+  --type-category-title-size: 1.5rem;
+  --aspect-category-card: 1.13;
   --icon-stroke-width: 1.5;
 }
 
@@ -234,7 +339,7 @@
 
   @media (min-width: 48rem) {
     :root {
-      --spacing-margin: 2.5rem;
+      --spacing-margin: 2rem;
     }
   }
 }
@@ -339,7 +444,7 @@
   input:focus-visible + .filter-swatch,
   label:has(input:focus-visible) .filter-checkbox,
   label:has(input:focus-visible) .filter-swatch {
-    outline: 2px solid var(--color-accent);
+    outline: 2px solid var(--color-focus);
     outline-offset: 2px;
   }
   .filter-checkbox[aria-disabled="true"],
@@ -408,7 +513,7 @@
     cursor: not-allowed;
   }
   .option-pill:focus-visible {
-    outline: 2px solid var(--color-accent);
+    outline: 2px solid var(--color-focus);
     outline-offset: 2px;
   }
   @media (hover: hover) {
@@ -447,7 +552,7 @@
   }
   .badge-accent {
     background: var(--color-badge-accent, var(--color-accent));
-    color: var(--color-badge-accent-text, var(--color-interactive-text));
+    color: var(--color-badge-accent-text, var(--color-accent-text));
   }
   .badge-info {
     background: var(--color-badge-info, var(--color-info));
@@ -553,28 +658,31 @@
   .type-display {
     font-size: var(--type-heading-2xl-size);
     font-family: var(--type-heading-2xl-font);
-    font-weight: 300;
+    font-weight: 500;
     line-height: 1.25;
+    letter-spacing: -0.035em;
   }
   .type-heading-xl {
     font-size: var(--type-heading-xl-size);
     font-family: var(--type-heading-xl-font);
-    font-weight: 300;
+    font-weight: 500;
+    letter-spacing: -0.025em;
   }
   .type-heading-lg {
     font-size: var(--type-heading-lg-size);
     font-family: var(--type-heading-lg-font);
-    font-weight: 300;
+    font-weight: 500;
+    letter-spacing: -0.02em;
   }
   .type-heading-md {
     font-size: var(--type-heading-md-size);
     font-family: var(--type-heading-md-font);
-    font-weight: 400;
+    font-weight: 500;
   }
   .type-heading-sm {
     font-size: var(--type-heading-sm-size);
     font-family: var(--type-heading-sm-font);
-    font-weight: 400;
+    font-weight: 600;
   }
   .type-body-lg {
     font-size: var(--type-paragraph-lg-size);
@@ -608,7 +716,7 @@
     inset: 0;
   }
   .card-link:focus-visible {
-    outline: 2px solid var(--color-accent);
+    outline: 2px solid var(--color-focus);
     outline-offset: 2px;
   }
 
@@ -698,7 +806,7 @@
     opacity: 1;
   }
   .nav-dropdown-item:focus-visible {
-    outline: 2px solid var(--color-accent);
+    outline: 2px solid var(--color-focus);
     outline-offset: 2px;
     border-radius: var(--radius-sm);
   }
@@ -778,7 +886,7 @@
   .richtext h5,
   .richtext h6 {
     font-family: var(--font-heading);
-    font-weight: 700;
+    font-weight: 600;
     color: var(--color-on-surface);
     line-height: 1.25;
     margin-block-start: 1.5rem;
